@@ -17,15 +17,21 @@ public final class NetworkManager {
 
     public static void initServer() {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            Armorhider.LOGGER.info("Player joined with ID {}. Sending current config to client...", handler.player.getUuidAsString());
             var p = handler.player;
             var currentConfig = ServerRuntime.store.getConfig();
             sendToClient(p, currentConfig);
         });
+        
         ServerPlayNetworking.registerGlobalReceiver(SettingsC2SPacket.IDENTIFIER, (payload, context) ->{
+            Armorhider.LOGGER.info("Server received settings packet from {}", payload.config().playerId.toString());
+            
             var data = payload.config();
+            
             try {
                 ServerRuntime.put(data.playerId, data);
-                sendToAllClients(ServerRuntime.store.getConfig());
+                ServerRuntime.store.save();
+                sendToAllClients(data.playerId, ServerRuntime.store.getConfig());
             } catch(Exception e) {
                 Armorhider.LOGGER.error("Failed to store player data!", e);
             }
@@ -36,10 +42,13 @@ public final class NetworkManager {
         ServerPlayNetworking.send(player, new SettingsS2CPacket(cfg));
     }
 
-    private static void sendToAllClients(List<PlayerConfig> cfg) {
+    private static void sendToAllClients(UUID playerId, List<PlayerConfig> cfg) {
         var players = ServerRuntime.server.getPlayerManager().getPlayerList();
         players.forEach(player -> {
-            ServerPlayNetworking.send(player, new SettingsS2CPacket(cfg));
+            Armorhider.LOGGER.info("Sending config to players...");
+            if (!player.getUuid().equals(playerId)) {
+                ServerPlayNetworking.send(player, new SettingsS2CPacket(cfg));
+            }
         });
     }
     

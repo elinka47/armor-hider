@@ -1,5 +1,6 @@
 package de.zannagh.armorhider.mixin.client;
 
+import de.zannagh.armorhider.ArmorTransparencyHelper;
 import de.zannagh.armorhider.ClientConfigManager;
 import de.zannagh.armorhider.PlayerConfig;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
@@ -52,16 +53,20 @@ public class ArmorRenderMixin {
 
         PlayerConfig config = ClientConfigManager.get();
         double transparency = armorHider$getTransparencyForSlot(slot, config);
-
+        
         // If transparency is near 0, completely hide the armor piece
         if (transparency < 0.01) {
             ci.cancel();
+            return;
         }
+
+        ArmorTransparencyHelper.setCurrentArmorSlot(slot);
     }
 
     @Inject(method = "renderArmor", at = @At("RETURN"))
     private void clearSlot(CallbackInfo ci) {
         armorHider$currentSlot.remove();
+        ArmorTransparencyHelper.clearCurrentArmorSlot();
     }
 
     @Unique

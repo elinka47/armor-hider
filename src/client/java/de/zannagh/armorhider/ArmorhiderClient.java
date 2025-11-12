@@ -1,7 +1,9 @@
 package de.zannagh.armorhider;
 
+import de.zannagh.armorhider.net.SettingsC2SPacket;
 import de.zannagh.armorhider.net.SettingsS2CPacket;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 public class ArmorhiderClient implements ClientModInitializer {
@@ -21,6 +23,9 @@ public class ArmorhiderClient implements ClientModInitializer {
             context.client().execute(() -> ClientConfigManager.setServerConfig(config));
         });
         ClientConfigManager.load();
+        ClientPlayConnectionEvents.JOIN.register((handler,  packetSender,  client) ->{
+            ClientPlayNetworking.send(new SettingsC2SPacket(ClientConfigManager.get()));
+        });
 	}
     
 }

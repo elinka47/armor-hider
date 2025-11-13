@@ -2,12 +2,22 @@ package de.zannagh.armorhider.resources;
 
 import net.minecraft.entity.EquipmentSlot;
 
+import java.util.UUID;
+
 public class ArmorModificationInfo {
     private PlayerConfig playerConfig;
+    public UUID playerId;
+    public String playerName;
     private EquipmentSlot equipmentSlot;
-    public ArmorModificationInfo(EquipmentSlot slot, PlayerConfig config){
+    public ArmorModificationInfo(EquipmentSlot slot, PlayerConfig config) {
         equipmentSlot = slot;
         playerConfig = config;
+        playerId = config.playerId;
+        playerName = config.playerName;
+    }
+    
+    public EquipmentSlot getEquipmentSlot() {
+        return equipmentSlot;
     }
     
     public double GetTransparency(){
@@ -20,7 +30,7 @@ public class ArmorModificationInfo {
         };
     }
     
-    public boolean ShouldHide(){
+    public boolean ShouldHide() {
         double transparency = switch (equipmentSlot) {
             case HEAD -> playerConfig.helmetTransparency;
             case CHEST -> playerConfig.chestTransparency;

@@ -8,6 +8,7 @@ public class PlayerConfig {
     public static PlayerConfig FromPacket(double helmet, double chest, double legs, double boots, String uuid, String playerName){
         return new PlayerConfig(helmet, chest, legs, boots, uuid, playerName);
     }
+    
     public PlayerConfig(double helmet, double chest, double legs, double boots, String uuid, String name){
         helmetTransparency = helmet;
         chestTransparency = chest;

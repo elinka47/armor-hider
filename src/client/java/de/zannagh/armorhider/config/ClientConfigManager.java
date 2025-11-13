@@ -22,50 +22,35 @@ public final class ClientConfigManager {
 
     private static PlayerConfig CURRENT = PlayerConfig.defaults(UUID.randomUUID(), "dummy");
     
-    private static Map<UUID, PlayerConfig> SERVERCONFIG = new HashMap<>();
+    private static Map<String, PlayerConfig> SERVERCONFIG = new HashMap<>();
 
     public static void updateName(String name){
         CURRENT.playerName = name;
         save();
     }
-    
-    public static boolean isEnabled(){
-        return CURRENT.helmetTransparency < 1 && CURRENT.chestTransparency < 1 && CURRENT.legsTransparency < 1 && CURRENT.bootsTransparency < 1;
-    }
-    
-    public static void setEnabled(boolean enabled){
-        if (enabled) {
-            CURRENT.helmetTransparency = 1;
-            CURRENT.chestTransparency = 1;
-            CURRENT.legsTransparency = 1;
-            CURRENT.bootsTransparency = 1;
-        }
-        else {
-            CURRENT.helmetTransparency = 0;
-            CURRENT.chestTransparency = 0;
-            CURRENT.legsTransparency = 0;
-            CURRENT.bootsTransparency = 0;
-        }
+
+    public static void updateId(UUID id){
+        CURRENT.playerId = id;
         save();
     }
     
-    public static void setHelmet(boolean enabled){
-        CURRENT.helmetTransparency = enabled ? 1.0 : 0.0;
+    public static void setHelmetTransparency(double transparency){
+        CURRENT.helmetTransparency = transparency;
         save();
     }
 
-    public static void setChest(boolean enabled){
-        CURRENT.chestTransparency = enabled ? 1.0 : 0.0;
+    public static void setChestTransparency(double transparency){
+        CURRENT.chestTransparency = transparency;
         save();
     }
 
-    public static void setLegs(boolean enabled){
-        CURRENT.legsTransparency = enabled ? 1.0 : 0.0;
+    public static void setLegsTransparency(double transparency){
+        CURRENT.legsTransparency = transparency;
         save();
     }
 
-    public static void setBoots(boolean enabled){
-        CURRENT.bootsTransparency = enabled ? 1.0 : 0.0;
+    public static void setBootsTransparency(double transparency){
+        CURRENT.bootsTransparency = transparency;
         save();
     }
     
@@ -94,7 +79,9 @@ public final class ClientConfigManager {
             try (Writer w = Files.newBufferedWriter(FILE)) {
                 GSON.toJson(CURRENT, w);
                 ArmorHider.LOGGER.info("Saved client config to file.");
-                if (MinecraftClient.getInstance().isConnectedToLocalServer() || MinecraftClient.getInstance().getServer() != null) {
+                if (MinecraftClient.getInstance().isConnectedToLocalServer() 
+                        || MinecraftClient.getInstance().getServer() != null 
+                        || (MinecraftClient.getInstance().getNetworkHandler() != null && MinecraftClient.getInstance().getNetworkHandler().getServerInfo() != null)) {
                     ArmorHider.LOGGER.info("Sending to server...");
                     ClientPlayNetworking.send(new SettingsC2SPacket(get()));
                     ArmorHider.LOGGER.info("Saved client config and sent to server. New config is {}", GSON.toJson(CURRENT));
@@ -105,30 +92,41 @@ public final class ClientConfigManager {
         }
     }
     
-    public static Map<UUID, PlayerConfig> getServerConfig(){ return SERVERCONFIG; }
+    public static Map<String, PlayerConfig> getServerConfig(){ return SERVERCONFIG; }
     
     public static void setServerConfig(List<PlayerConfig> serverConfig) {
         ArmorHider.LOGGER.info("Setting server config to {}", GSON.toJson(serverConfig));
         SERVERCONFIG = new HashMap<>();
         serverConfig.forEach(c -> {
-            SERVERCONFIG.put(c.playerId, c);
+            SERVERCONFIG.put(c.playerName, c);
         });
     }
 
     public static PlayerConfig get() { return CURRENT; }
     public static void set(PlayerConfig cfg) { CURRENT = cfg; save(); }
 
-    public static PlayerConfig getConfigForPlayer(UUID playerId) {
-        if (playerId == null) {
-            return CURRENT;
-        }
-        return SERVERCONFIG.getOrDefault(playerId, CURRENT);
-    }
-
-    public static PlayerConfig getConfigForPlayerByName(String playerName) {
+    public static PlayerConfig getConfigForPlayer(String playerName) {
         if (playerName == null) {
             return CURRENT;
         }
-        return SERVERCONFIG.values().stream().filter(c -> c.playerName.equalsIgnoreCase(playerName)).findFirst().orElse(CURRENT);
+        var config = SERVERCONFIG.getOrDefault(playerName, null);
+        if (config != null) {
+            return config;
+        }
+        else {
+            if (!SERVERCONFIG.containsKey(playerName) && Objects.requireNonNull(MinecraftClient.getInstance().getNetworkHandler()).getProfile().name().equals(playerName)) {
+                SERVERCONFIG.put(playerName, CURRENT);
+                return CURRENT;
+            }
+            ArmorHider.LOGGER.warn("Failed to get config for player by id, trying by name. {} {}", playerName, playerName);
+            var nameBasedConfig = SERVERCONFIG.values().stream().filter(c -> c.playerName.equals(playerName)).findFirst();
+            if (nameBasedConfig.isPresent()) {
+                ArmorHider.LOGGER.info("Found config for player by name {}, returning config", playerName);
+                return nameBasedConfig.get();
+            }
+        }
+        ArmorHider.LOGGER.warn("Failed to get config for player {}", playerName);
+        return CURRENT;
     }
+
 }

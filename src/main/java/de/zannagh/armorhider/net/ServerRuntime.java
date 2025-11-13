@@ -14,7 +14,5 @@ public final class ServerRuntime {
         server = s;
         store = ServerConfigStore.open();
     }
-    public static PlayerConfig get(UUID id) { return store.get(id); }
     public static void put(UUID id, PlayerConfig c) { store.put(id, c); }
-    public static void flushLater() { server.execute(store::save); }
 }

@@ -1,5 +1,6 @@
 package de.zannagh.armorhider;
 
+import de.zannagh.armorhider.common.EnrichedLogger;
 import de.zannagh.armorhider.net.CommsManager;
 import de.zannagh.armorhider.net.ServerRuntime;
 import de.zannagh.armorhider.netPackets.SettingsC2SPacket;
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 public class ArmorHider implements ModInitializer {
 	public static final String MOD_ID = "armor-hider";
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+	public static final EnrichedLogger LOGGER = new EnrichedLogger(LoggerFactory.getLogger(MOD_ID));
 
 	@Override
 	public void onInitialize() {

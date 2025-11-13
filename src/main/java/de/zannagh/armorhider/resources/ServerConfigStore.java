@@ -63,12 +63,16 @@ public final class ServerConfigStore {
             ArmorHider.LOGGER.error("Server config save failed", e);
         }
     }
-
-    public PlayerConfig get(UUID uuid) {
-        return data.getOrDefault(uuid, PlayerConfig.defaults(uuid, "dummy"));
-    }
-
     public void put(UUID uuid, PlayerConfig cfg) {
         data.put(uuid, cfg);
+        Map<UUID, PlayerConfig> overwrites = new HashMap<>();
+        data.forEach((e, k) -> {
+            if (k.playerName.equals(cfg.playerName)){
+                overwrites.put(e, k);
+            }
+        });
+        overwrites.forEach((e, k) -> {
+            data.replace(e, k);
+        });
     }
 }

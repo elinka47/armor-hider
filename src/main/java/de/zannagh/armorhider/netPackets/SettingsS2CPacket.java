@@ -25,7 +25,7 @@ public record SettingsS2CPacket(List<PlayerConfig> config) implements CustomPayl
 
     public static final PacketCodec<ByteBuf, SettingsS2CPacket> PACKET_CODEC = PacketCodecs.collection(
             ArrayList::new, PLAYER_CONFIG_CODEC
-    ).xmap(list -> new SettingsS2CPacket(list), packet -> new ArrayList<>(packet.config()));
+    ).xmap(SettingsS2CPacket::new, packet -> new ArrayList<>(packet.config()));
     @Override
     public Id<? extends CustomPayload> getId() {
         return IDENTIFIER;

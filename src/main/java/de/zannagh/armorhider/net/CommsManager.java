@@ -29,7 +29,7 @@ public final class CommsManager {
             try {
                 ServerRuntime.put(data.playerId, data);
                 ServerRuntime.store.save();
-                sendToAllClients(data.playerId, ServerRuntime.store.getConfig());
+                sendToAllClientsButSender(data.playerId, ServerRuntime.store.getConfig());
             } catch(Exception e) {
                 ArmorHider.LOGGER.error("Failed to store player data!", e);
             }
@@ -40,7 +40,7 @@ public final class CommsManager {
         ServerPlayNetworking.send(player, new SettingsS2CPacket(cfg));
     }
 
-    private static void sendToAllClients(UUID playerId, List<PlayerConfig> cfg) {
+    private static void sendToAllClientsButSender(UUID playerId, List<PlayerConfig> cfg) {
         var players = ServerRuntime.server.getPlayerManager().getPlayerList();
         players.forEach(player -> {
             ArmorHider.LOGGER.info("Sending config to players...");

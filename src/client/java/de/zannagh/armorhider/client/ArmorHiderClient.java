@@ -4,12 +4,17 @@ import de.zannagh.armorhider.ArmorHider;
 import de.zannagh.armorhider.config.ClientConfigManager;
 import de.zannagh.armorhider.netPackets.SettingsC2SPacket;
 import de.zannagh.armorhider.netPackets.SettingsS2CPacket;
+import de.zannagh.armorhider.resources.ArmorModificationInfo;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
+import net.minecraft.entity.EquipmentSlot;
 
 public class ArmorHiderClient implements ClientModInitializer {
     
+    public static ThreadLocal<EquipmentSlot> CurrentSlot =  ThreadLocal.withInitial(() -> null);
+    public static ThreadLocal<ArmorModificationInfo> CurrentArmorMod = ThreadLocal.withInitial(() -> null);
     @Override
 	public void onInitializeClient() {
         ArmorHider.LOGGER.info("Armor Hider client initializing...");
@@ -22,16 +27,32 @@ public class ArmorHiderClient implements ClientModInitializer {
                 ArmorHider.LOGGER.error("Failed to load settings packet.");
             }
             
-            context.client().execute(() -> ClientConfigManager.setServerConfig(config));
+            ClientConfigManager.setServerConfig(config);
+            ArmorHider.LOGGER.info("Armor Hider successfully set configuration from server.");
         });
         ClientConfigManager.load();
         ClientPlayConnectionEvents.JOIN.register((handler,  packetSender,  client) ->{
             assert client.player != null;
             var playerName = client.player.getName().getString();
             ClientConfigManager.updateName(playerName);
+            ClientConfigManager.updateId(handler.getProfile().id());
             ClientPlayNetworking.send(new SettingsC2SPacket(ClientConfigManager.get()));
         });
 
 	}
+
+    public static ArmorModificationInfo TryResolveConfigFromPlayerEntityState(EquipmentSlot slot, PlayerEntityRenderState state){
+        if (state.displayName != null){
+            if (ClientConfigManager.get().playerName.equals(state.displayName.getString())){
+                return new ArmorModificationInfo(slot, ClientConfigManager.get());
+            }
+            var filterResult = ClientConfigManager.getServerConfig()
+                    .values().stream().filter(cfg -> cfg.playerName.equals(state.displayName.getString())).findFirst();
+            if (filterResult.isPresent()){
+                return new ArmorModificationInfo(slot, filterResult.get());
+            }
+        }
+        return new ArmorModificationInfo(slot, ClientConfigManager.get());
+    }
     
 }

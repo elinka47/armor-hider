@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "zannaghs-armor-hider",
+	"id": "armor-hider",
 	"version": "${version}",
-	"name": "zannaghs-armor-hider",
+	"name": "armor-hider",
 	"description": "Small Fabric Server/Client mod to hide armor pieces based on player preferences.",
 	"authors": [
 		"zannagh"

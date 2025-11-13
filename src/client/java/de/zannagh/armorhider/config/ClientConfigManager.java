@@ -22,7 +22,7 @@ public final class ClientConfigManager {
 
     private static PlayerConfig CURRENT = PlayerConfig.defaults(UUID.randomUUID(), "dummy");
     
-    private static Map<String, PlayerConfig> SERVERCONFIG = new HashMap<>();
+    private static Map<String, PlayerConfig> serverHashMap = new HashMap<>();
 
     public static void updateName(String name){
         CURRENT.playerName = name;
@@ -92,13 +92,13 @@ public final class ClientConfigManager {
         }
     }
     
-    public static Map<String, PlayerConfig> getServerConfig(){ return SERVERCONFIG; }
+    public static Map<String, PlayerConfig> getServerConfig(){ return serverHashMap; }
     
     public static void setServerConfig(List<PlayerConfig> serverConfig) {
         ArmorHider.LOGGER.info("Setting server config to {}", GSON.toJson(serverConfig));
-        SERVERCONFIG = new HashMap<>();
+        serverHashMap = new HashMap<>();
         serverConfig.forEach(c -> {
-            SERVERCONFIG.put(c.playerName, c);
+            serverHashMap.put(c.playerName, c);
         });
     }
 
@@ -109,17 +109,17 @@ public final class ClientConfigManager {
         if (playerName == null) {
             return CURRENT;
         }
-        var config = SERVERCONFIG.getOrDefault(playerName, null);
+        var config = serverHashMap.getOrDefault(playerName, null);
         if (config != null) {
             return config;
         }
         else {
-            if (!SERVERCONFIG.containsKey(playerName) && Objects.requireNonNull(MinecraftClient.getInstance().getNetworkHandler()).getProfile().name().equals(playerName)) {
-                SERVERCONFIG.put(playerName, CURRENT);
+            if (!serverHashMap.containsKey(playerName) && Objects.requireNonNull(MinecraftClient.getInstance().getNetworkHandler()).getProfile().name().equals(playerName)) {
+                serverHashMap.put(playerName, CURRENT);
                 return CURRENT;
             }
             ArmorHider.LOGGER.warn("Failed to get config for player by id, trying by name. {} {}", playerName, playerName);
-            var nameBasedConfig = SERVERCONFIG.values().stream().filter(c -> c.playerName.equals(playerName)).findFirst();
+            var nameBasedConfig = serverHashMap.values().stream().filter(c -> c.playerName.equals(playerName)).findFirst();
             if (nameBasedConfig.isPresent()) {
                 ArmorHider.LOGGER.info("Found config for player by name {}, returning config", playerName);
                 return nameBasedConfig.get();

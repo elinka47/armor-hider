@@ -15,6 +15,7 @@ public class ArmorHiderClient implements ClientModInitializer {
     
     public static ThreadLocal<EquipmentSlot> CurrentSlot =  ThreadLocal.withInitial(() -> null);
     public static ThreadLocal<ArmorModificationInfo> CurrentArmorMod = ThreadLocal.withInitial(() -> null);
+    
     @Override
 	public void onInitializeClient() {
         ArmorHider.LOGGER.info("Armor Hider client initializing...");
@@ -38,21 +39,12 @@ public class ArmorHiderClient implements ClientModInitializer {
             ClientConfigManager.updateId(handler.getProfile().id());
             ClientPlayNetworking.send(new SettingsC2SPacket(ClientConfigManager.get()));
         });
-
 	}
 
-    public static ArmorModificationInfo TryResolveConfigFromPlayerEntityState(EquipmentSlot slot, PlayerEntityRenderState state){
-        if (state.displayName != null){
-            if (ClientConfigManager.get().playerName.equals(state.displayName.getString())){
-                return new ArmorModificationInfo(slot, ClientConfigManager.get());
-            }
-            var filterResult = ClientConfigManager.getServerConfig()
-                    .values().stream().filter(cfg -> cfg.playerName.equals(state.displayName.getString())).findFirst();
-            if (filterResult.isPresent()){
-                return new ArmorModificationInfo(slot, filterResult.get());
-            }
-        }
-        return new ArmorModificationInfo(slot, ClientConfigManager.get());
+    public static ArmorModificationInfo tryResolveConfigFromPlayerEntityState(EquipmentSlot slot, PlayerEntityRenderState state){
+        return state.displayName == null 
+                ? new ArmorModificationInfo(slot, ClientConfigManager.get())
+                : new ArmorModificationInfo(slot, ClientConfigManager.getConfigForPlayer(state.displayName.getString()));
     }
     
 }

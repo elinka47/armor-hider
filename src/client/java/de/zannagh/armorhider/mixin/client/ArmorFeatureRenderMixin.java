@@ -23,7 +23,6 @@ public class ArmorFeatureRenderMixin {
             int light,
             BipedEntityRenderState armorModel,
             CallbackInfo ci) {
-
         ArmorHiderClient.CurrentSlot.set(slot);
     }
 }

@@ -5,7 +5,8 @@
 	"client": [
       "ArmorFeatureRenderMixin",
       "EquipmentRenderMixin",
-      "SkinOptionsMixin"
+      "SkinOptionsMixin",
+      "LivingEntityMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

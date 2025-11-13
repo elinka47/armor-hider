@@ -1,10 +1,8 @@
 package de.zannagh.armorhider.mixin.client;
 
-import com.ibm.icu.impl.UResource;
 import de.zannagh.armorhider.config.ClientConfigManager;
 import net.minecraft.client.gui.screen.option.GameOptionsScreen;
 import net.minecraft.client.gui.screen.option.SkinOptionsScreen;
-import net.minecraft.client.gui.widget.CyclingButtonWidget;
 import net.minecraft.client.gui.widget.OptionListWidget;
 import net.minecraft.client.option.SimpleOption;
 import net.minecraft.text.Text;

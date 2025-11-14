@@ -3,7 +3,7 @@ plugins {
 	id 'maven-publish'
 }
 
-version = project.mod_version
+version = "git describe --tags".execute().text.replaceAll(/-g[a-f0-9]+$/, '').trim()
 group = project.maven_group
 
 base {

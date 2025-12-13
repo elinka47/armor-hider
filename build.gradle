@@ -3,50 +3,16 @@ plugins {
 	id 'maven-publish'
 }
 
-static def getGitVersion() {
+def getGitVersion() {
+    String ciVersionProperty = findProperty("semVer") ?: ""
+    if (ciVersionProperty != "") {
+        // In CI, this property is set to versionize
+        return "git rev-parse --abbrev-ref HEAD".execute().text.trim().replace("release", "").replace("/", "-") + "-" + ciVersionProperty
+    }
     String branchName = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
-    String shortSha = "git rev-parse --short HEAD".execute().text.trim()
-    try {
-        String OS = System.getProperty("os.name")
-        String gitVersionCommand = "gitversion"
-        String gitVersionInstallCommand = "brew install gitversion"
-        
-        if (OS.toLowerCase().contains("windows")) {
-            gitVersionCommand = "dotnet gitversion"
-            gitVersionInstallCommand = "dotnet tool install --global GitVersion.Tool"
-        }
-        
-        String gitVersionToolVersion = ""
-        try {
-            gitVersionToolVersion = (gitVersionCommand + " version").execute().text
-            if (gitVersionToolVersion.contains("command not found")) {
-                gitVersionInstallCommand.execute()
-            }
-        }
-        catch (IOException) {
-            gitVersionInstallCommand.execute()
-        }
-        
-        do {
-            try {
-                gitVersionToolVersion = (gitVersionCommand + " version").execute().text
-            } 
-            catch (IOException) {
-                gitVersionToolVersion = ""   
-            }
-            if (gitVersionToolVersion.contains("command not found")) {
-                gitVersionToolVersion = ""
-            }
-        } while (gitVersionToolVersion == "")
-        
-        String majorMinorPatch = (gitVersionCommand + " /output json /showVariable SemVer").execute().text.trim()
-        String uncommitedChanged = (gitVersionCommand + " /output json /showVariable UncommittedChanges").execute().text.trim()
-        return branchName + "-" + majorMinorPatch + "." + uncommitedChanged + "-" + shortSha
-    }
-    catch (ignored) {
-        String lastKnownTag = "git describe --tags".execute().text.trim()
-        return branchName + "-" + lastKnownTag + "-" + shortSha
-    }
+    String lastKnownTag = "git describe --tags".execute().text.trim()
+    String version = branchName + "-" + lastKnownTag
+    return version
 }
 
 version = getGitVersion()
@@ -106,8 +72,8 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.VERSION_23
+	targetCompatibility = JavaVersion.VERSION_23
 }
 
 jar {

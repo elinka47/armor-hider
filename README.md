@@ -21,5 +21,4 @@ Feel free to create an issue on the GitHub repository to make me aware of proble
 
 ## Versioning
 
-The build.gradle file uses GitVersion to versionize the build output. In case gitversion fails (should install itself via brew or dotnet depending on your OS), it will fallback to {branch}-{lastTag}-{shortSha}.
-This is meant to properly versionize when using different branches for targeting multiple minecraft versions (i.e. a branch 1.21.10 with the most recent tag being 0.3.0 would create a .jar: 'armor-hider-1.21.10-0.3.0.x-SHA.jar' where x is the number of uncommited changes and SHA is the commit SHA).
+CI runs are using GitVersion to versionize, whereas local builds will only use git tag information to versionize.

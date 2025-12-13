@@ -3,8 +3,55 @@ plugins {
 	id 'maven-publish'
 }
 
-version = "git describe --tags".execute().text.replaceAll(/-g[a-f0-9]+$/, '').trim()
+static def getGitVersion() {
+    String branchName = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
+    String shortSha = "git rev-parse --short HEAD".execute().text.trim()
+    try {
+        String OS = System.getProperty("os.name")
+        String gitVersionCommand = "gitversion"
+        String gitVersionInstallCommand = "brew install gitversion"
+        
+        if (OS.toLowerCase().contains("windows")) {
+            gitVersionCommand = "dotnet gitversion"
+            gitVersionInstallCommand = "dotnet tool install --global GitVersion.Tool"
+        }
+        
+        String gitVersionToolVersion = ""
+        try {
+            gitVersionToolVersion = (gitVersionCommand + " version").execute().text
+            if (gitVersionToolVersion.contains("command not found")) {
+                gitVersionInstallCommand.execute()
+            }
+        }
+        catch (IOException) {
+            gitVersionInstallCommand.execute()
+        }
+        
+        do {
+            try {
+                gitVersionToolVersion = (gitVersionCommand + " version").execute().text
+            } 
+            catch (IOException) {
+                gitVersionToolVersion = ""   
+            }
+            if (gitVersionToolVersion.contains("command not found")) {
+                gitVersionToolVersion = ""
+            }
+        } while (gitVersionToolVersion == "")
+        
+        String majorMinorPatch = (gitVersionCommand + " /output json /showVariable SemVer").execute().text.trim()
+        String uncommitedChanged = (gitVersionCommand + " /output json /showVariable UncommittedChanges").execute().text.trim()
+        return branchName + "-" + majorMinorPatch + "." + uncommitedChanged + "-" + shortSha
+    }
+    catch (ignored) {
+        String lastKnownTag = "git describe --tags".execute().text.trim()
+        return branchName + "-" + lastKnownTag + "-" + shortSha
+    }
+}
+
+version = getGitVersion()
 group = project.maven_group
+
 
 base {
 	archivesName = project.archives_base_name

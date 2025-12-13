@@ -1,11 +1,15 @@
+version-in-branch-pattern: (\A(?!x)x)
+strategies:
+  - Fallback
+  - ConfiguredNextVersion
+  - MergeMessage
+  - TaggedCommit
+  - TrackReleaseBranches
 branches:
   main:
     mode: ContinuousDelivery
     increment: None
     label: ''
-    source-branches: []
-    is-release-branch: false
-    is-main-branch: true
     pre-release-weight: 0
     prevent-increment:
       when-current-commit-tagged: true
@@ -14,7 +18,7 @@ branches:
     increment: None
     label: ''
     regex: ^release/*
-    source-branches: 
+    source-branches:
       - main
     is-release-branch: true
     is-main-branch: false
@@ -25,9 +29,6 @@ branches:
     mode: ContinuousDelivery
     increment: None
     label: ''
-    source-branches: 
-      - main
-      - release
     pre-release-weight: 0
     prevent-increment:
       when-current-commit-tagged: true

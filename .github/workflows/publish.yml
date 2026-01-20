@@ -29,13 +29,17 @@ jobs:
       - name: Set Version Properties
         id: version
         uses: gittools/actions/gitversion/execute@v4.2.0
-
+      
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
 
       - name: build
-        if: ${{ github.event_name == 'release' }}
+        if: ${{ github.event_name == 'release' && !contains(github.event.release.name, 'preview') }}
         run: ./gradlew build -PsemVer="${{ steps.version.outputs.majorMinorPatch }}" -Pprerelease="${{ github.event.release.prerelease }}"
+
+      - name: buildPreview
+        if: ${{ github.event_name == 'release' && contains(github.event.release.name, 'preview') }}
+        run: ./gradlew build -PsemVer="${{ steps.version.outputs.majorMinorPatch }}" -Pprerelease="True"
 
       - name: buildWhenDispatch
         if: ${{ github.event_name != 'release' }}

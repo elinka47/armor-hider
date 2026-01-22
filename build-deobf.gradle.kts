@@ -1,7 +1,11 @@
 plugins {
-    id("net.fabricmc.fabric-loom-remap") version "1.14-SNAPSHOT"
+    id("net.fabricmc.fabric-loom") version "1.14-SNAPSHOT"
     id("maven-publish")
 }
+
+// Convert Maven version (e.g., 26.1-snapshot-4) to Fabric version (e.g., 26.1-alpha.4)
+// Mojang uses "snapshot" in Maven artifacts but "alpha" in the internal version ID
+val fabricGameVersion: String = stonecutter.current.project.replace("-snapshot-", "-alpha.")
 
 fun getGitVersion(): String {
     var isPreRelease = true
@@ -20,17 +24,7 @@ fun getGitVersion(): String {
         "$modLoader-${getVersionFromGitVersionOrTag(gameVersion)}"
     }
 
-    return if (isPreRelease) {
-        val preReleaseVersion = findProperty("preReleaseVersion")?.toString() ?: ""
-        if (preReleaseVersion.isNotEmpty()) {
-            "$buildVersion-preview.$preReleaseVersion"
-        } else {
-            "$buildVersion-preview"
-        }
-    } 
-    else {
-        buildVersion
-    }
+    return if (isPreRelease) "$buildVersion-preview" else buildVersion
 }
 
 version = getGitVersion()
@@ -58,13 +52,15 @@ loom {
     // Shared run directory for all versions
     runConfigs.configureEach {
         runDir = "run"
+        // Explicitly set game version for Fabric Loader (26.1 snapshots use non-semantic versioning)
+        vmArg("-Dfabric.gameVersion=$fabricGameVersion")
     }
 }
 
 dependencies {
     minecraft("com.mojang:minecraft:${stonecutter.current.project}")
-    mappings(loom.officialMojangMappings())
-    modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
+    // No mappings needed for unobfuscated Minecraft 26.1+
+    implementation("net.fabricmc:fabric-loader:${property("loader_version")}")
 
     compileOnly("org.jspecify:jspecify:1.0.0")
 
@@ -75,34 +71,19 @@ dependencies {
 
 tasks.processResources {
     inputs.property("version", project.version)
-    inputs.property("minecraft_version", stonecutter.current.project)
+    inputs.property("minecraft_version", fabricGameVersion)
 
     filesMatching("fabric.mod.json") {
         expand(
             "version" to project.version,
-            "minecraft_version" to stonecutter.current.project
+            "minecraft_version" to fabricGameVersion
         )
     }
 }
 
-val javaVersion: JavaVersion
-    get() {
-        return when {
-            sc.current.parsed >= "1.20.6" -> JavaVersion.VERSION_21
-            sc.current.parsed >= "1.18" -> JavaVersion.VERSION_17
-            sc.current.parsed >= "1.17" -> JavaVersion.VERSION_16
-            else -> JavaVersion.VERSION_1_8
-        }
-    }
-val javaVersionAsInt: Int
-    get() {
-        return when {
-            sc.current.parsed >= "1.20.6" -> 21
-            sc.current.parsed >= "1.18" -> 17
-            sc.current.parsed >= "1.17" -> 16
-            else -> 18
-        }
-    }
+// Minecraft 26.1+ requires Java 25
+val javaVersion = JavaVersion.VERSION_25
+val javaVersionAsInt = 25
 
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(javaVersionAsInt)
@@ -141,6 +122,92 @@ tasks.test {
     useJUnitPlatform()
     testLogging {
         events("passed", "skipped", "failed")
+    }
+}
+
+// Server startup test - verifies the mod loads without crashing
+tasks.register("serverStartupTest") {
+    group = "verification"
+    description = "Starts a Minecraft server with the mod to verify it loads correctly"
+    dependsOn(tasks.named("jar"))
+
+    doLast {
+        val serverDir = layout.buildDirectory.dir("server-test").get().asFile
+        serverDir.mkdirs()
+
+        // Accept EULA
+        File(serverDir, "eula.txt").writeText("eula=true")
+
+        // Get the server jar from Loom cache
+        val minecraftVersion = stonecutter.current.project
+        val serverJar = File(System.getProperty("user.home"), ".gradle/caches/fabric-loom/$minecraftVersion/minecraft-server.jar")
+
+        if (!serverJar.exists()) {
+            throw GradleException("Server jar not found at $serverJar. Run './gradlew downloadAssets' first.")
+        }
+
+        // Copy mod jar to mods folder
+        val modsDir = File(serverDir, "mods")
+        modsDir.mkdirs()
+        val modJar = tasks.named<org.gradle.jvm.tasks.Jar>("jar").get().archiveFile.get().asFile
+        modJar.copyTo(File(modsDir, modJar.name), overwrite = true)
+
+        // Copy Fabric Loader
+        val fabricLoaderJar = configurations.named("implementation").get().files.find { it.name.contains("fabric-loader") }
+        if (fabricLoaderJar != null) {
+            fabricLoaderJar.copyTo(File(modsDir, fabricLoaderJar.name), overwrite = true)
+        }
+
+        // Start server with timeout
+        val process = ProcessBuilder(
+            "java", "-Xmx512M",
+            "-Dfabric.skipMcProvider=true",
+            "-Dfabric.gameVersion=$fabricGameVersion",
+            "-jar", serverJar.absolutePath,
+            "--nogui"
+        )
+            .directory(serverDir)
+            .redirectErrorStream(true)
+            .start()
+
+        val timeout = 120_000L // 2 minutes
+        var serverStarted = false
+        var error: String? = null
+
+        Thread {
+            process.inputStream.bufferedReader().forEachLine { line ->
+                println("[Server] $line")
+                if (line.contains("Done") && line.contains("For help, type")) {
+                    serverStarted = true
+                    // Send stop command
+                    process.outputStream.bufferedWriter().apply {
+                        write("stop\n")
+                        flush()
+                    }
+                }
+                if (line.contains("Exception") || line.contains("Error loading mod")) {
+                    error = line
+                }
+            }
+        }.start()
+
+        // Wait for completion or timeout
+        val completed = process.waitFor(timeout, TimeUnit.MILLISECONDS)
+
+        if (!completed) {
+            process.destroyForcibly()
+            throw GradleException("Server startup test timed out after ${timeout / 1000} seconds")
+        }
+
+        if (error != null) {
+            throw GradleException("Server startup failed: $error")
+        }
+
+        if (!serverStarted) {
+            throw GradleException("Server did not start successfully. Exit code: ${process.exitValue()}")
+        }
+
+        println("Server startup test passed!")
     }
 }
 

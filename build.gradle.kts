@@ -76,13 +76,82 @@ dependencies {
 tasks.processResources {
     inputs.property("version", project.version)
     inputs.property("minecraft_version", stonecutter.current.project)
+    inputs.property("java_version", javaVersionAsInt)
 
     filesMatching("fabric.mod.json") {
         expand(
             "version" to project.version,
-            "minecraft_version" to stonecutter.current.project
+            "minecraft_version" to stonecutter.current.project,
+            "java_version" to javaVersionAsInt
         )
     }
+    filesMatching("armor-hider.mixins.json") {
+        expand(
+            "java_version" to javaVersionForMixin,
+            "mixin_string" to getMainMixinString()
+        )
+    }
+}
+
+tasks.named<ProcessResources>("processClientResources") {
+    inputs.property("java_version", javaVersionForMixin)
+    inputs.property("mixin_string", getClientMixinString())
+    inputs.property("options_screen_mixin_string", getOptionsScreenMixinString())
+
+    filesMatching("armor-hider.client.mixins.json") {
+        expand(
+            "java_version" to javaVersionForMixin,
+            "mixin_string" to getClientMixinString(),
+            "options_screen_mixin_string" to getOptionsScreenMixinString()
+        )
+    }
+}
+
+fun getClientMixinString(): String {
+    var returnString = "";
+    
+    if (sc.current.parsed > "1.21.1"){
+        returnString += "bodyKneesAndToes.EquipmentRenderMixin\",\n"
+        returnString += "    \"bodyKneesAndToes.ArmorFeatureRenderMixin\",\n"
+    }
+    else {
+        returnString += "bodyKneesAndToes.HumanoidArmorLayerMixin\",\n"
+    }
+
+    if (sc.current.parsed >= "1.20.5") {
+        
+        returnString += "    \"networking.ClientPacketListenerMixin"
+    }
+    else {
+        returnString += "    \"networking.ClientPlayNetworkHandlerMixin"
+    }
+    return returnString;
+}
+
+fun getOptionsScreenMixinString(): String {
+    // For 1.20.x: Use OptionsScreenMixin (injects into main options screen)
+    // For 1.21+: Use SkinOptionsMixin (injects into skin options screen)
+    return if (sc.current.parsed > "1.21.1") {
+        "SkinOptionsMixin"
+    } else {
+        "OptionsScreenMixin"
+    }
+}
+
+fun getMainMixinString(): String {
+    var returnString =
+        "networking.MinecraftServerMixin\",\n" +
+        "    \"networking.ServerLoginMixin\",\n"
+    if (sc.current.parsed >= "1.20.5") {
+        returnString +=
+        "    \"networking.CustomPayloadCodecMixin\",\n" +
+        "    \"networking.ServerGamePacketListenerMixin"
+    }
+    else {
+        returnString += 
+        "    \"networking.ServerPlayNetworkHandlerMixin"
+    }
+    return returnString;
 }
 
 val javaVersion: JavaVersion
@@ -94,6 +163,17 @@ val javaVersion: JavaVersion
             else -> JavaVersion.VERSION_1_8
         }
     }
+
+val javaVersionForMixin: String
+    get() {
+        return when {
+            sc.current.parsed >= "1.20.6" -> "JAVA_21"
+            sc.current.parsed >= "1.18" -> "JAVA_17"
+            sc.current.parsed >= "1.17" -> "JAVA_16"
+            else -> "JAVA_18"
+        }
+    }
+
 val javaVersionAsInt: Int
     get() {
         return when {

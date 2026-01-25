@@ -5,10 +5,12 @@ import de.zannagh.armorhider.client.ArmorHiderClient;
 import de.zannagh.armorhider.client.OptionElementFactory;
 import de.zannagh.armorhider.rendering.RenderUtilities;
 import net.minecraft.client.Options;
-import net.minecraft.client.gui.components.CycleButton;
-import net.minecraft.client.gui.components.MultiLineTextWidget;
-import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.*;
+//? if >= 1.21
 import net.minecraft.client.gui.screens.options.OptionsSubScreen;
+//? if < 1.21
+//import net.minecraft.client.gui.screens.OptionsSubScreen;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 public class AdvancedArmorHiderSettingsScreen extends OptionsSubScreen {
@@ -29,16 +31,47 @@ public class AdvancedArmorHiderSettingsScreen extends OptionsSubScreen {
 
     private boolean setDisableLocal;
 
+    //? if < 1.21
+    //protected OptionsList list;
+
     public AdvancedArmorHiderSettingsScreen(net.minecraft.client.gui.screens.Screen parent, Options gameOptions, Component title) {
         super(parent, gameOptions, title);
     }
 
-
+    //? if >= 1.21 {
     @Override
     protected void addOptions() {
-        OptionElementFactory optionElementFactory = new OptionElementFactory(this, list, options);
+        addOptionsContent();
+    }
+    //?}
 
+    //? if < 1.21 {
+    /*@Override
+    protected void init() {
+        this.list = new OptionsList(this.minecraft, this.width, this.height, 32, this.height - 32, 25);
+        addOptionsContent();
+        this.addWidget(this.list);
+        this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button ->
+                this.onClose()
+        ).bounds(this.width / 2 - 100, this.height - 27, 200, 25).build());
+    }
+
+    @Override
+    public void render(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        this.renderBackground(graphics);
+        this.list.render(graphics, mouseX, mouseY, delta);
+        graphics.drawCenteredString(net.minecraft.client.Minecraft.getInstance().font, this.title, this.width / 2, 5, 16777215);
+        super.render(graphics, mouseX, mouseY, delta);
+    }
+    *///?}
+
+    private void addOptionsContent() {
+        OptionElementFactory optionElementFactory = new OptionElementFactory(this, list, options);
+        
+        //? if >= 1.21.9
         var adminCategory = new MultiLineTextWidget(RenderUtilities.getRowWidth(list), 20, Component.translatable("armorhider.options.admin.title"), this.getFont());
+        //? if < 1.21.9
+        //var adminCategory = new MultiLineTextWidget(RenderUtilities.getRowWidth(list), 20, Component.translatable("armorhider.options.admin.title"), net.minecraft.client.Minecraft.getInstance().font);
         optionElementFactory.addElementAsWidget(adminCategory);
         var serverConfig = ArmorHiderClient.CLIENT_CONFIG_MANAGER.getServerConfig();
         boolean serverCombatDetectionValue = serverConfig != null
@@ -53,19 +86,21 @@ public class AdvancedArmorHiderSettingsScreen extends OptionsSubScreen {
                 ? serverConfig.serverWideSettings.forceArmorHiderOff.getValue()
                 : getFallbackDefault(false);
 
-        var onText = Component.translatable("armorhider.options.toggle.on");
-        var offText = Component.translatable("armorhider.options.toggle.off");
         var combatDetectionServerText = Component.translatable("armorhider.options.combat_detection_server.title");
         var forceArmorHiderOffText = Component.translatable("armorhider.options.force_armor_hider_off.title");
 
-        //? if >= 1.21.11 {
+        //? if >= 1.21.9 {
+        var onText = Component.translatable("armorhider.options.toggle.on");
+        var offText = Component.translatable("armorhider.options.toggle.off");
+
+        //? if >= 1.21.11
         var cyclingWidgetBuilder = CycleButton.booleanBuilder(onText, offText, serverCombatDetectionValue);
+        //? if >= 1.21.9 && < 1.21.11
+        //var cyclingWidgetBuilder = CycleButton.booleanBuilder(onText, offText).withInitialValue(serverCombatDetectionValue);
+        //? if >= 1.21.11
         var forceOnOffBuilder = CycleButton.booleanBuilder(onText, offText, serverForcingArmorHiderOffValue);
-        //?}
-        //? if = 1.21.10 || 1.21.9 {
-        /*var cyclingWidgetBuilder = CycleButton.booleanBuilder(onText, offText).withInitialValue(serverCombatDetectionValue);
-        var forceOnOffBuilder = CycleButton.booleanBuilder(onText, offText).withInitialValue(serverForcingArmorHiderOffValue);
-        *///?}
+        //? if >= 1.21.9 && < 1.21.11
+        //var forceOnOffBuilder = CycleButton.booleanBuilder(onText, offText).withInitialValue(serverForcingArmorHiderOffValue);
 
         var cyclingWidget = cyclingWidgetBuilder.withTooltip(newValue -> {
             if (!ArmorHiderClient.isCurrentPlayerSinglePlayerHostOrAdmin) {
@@ -98,6 +133,7 @@ public class AdvancedArmorHiderSettingsScreen extends OptionsSubScreen {
                     setForceArmorHiderOff(newValue);
                 }
         );
+
         if (!ArmorHiderClient.isCurrentPlayerSinglePlayerHostOrAdmin) {
             armorHiderOffWidget.active = false;
             cyclingWidget.active = false;
@@ -108,8 +144,38 @@ public class AdvancedArmorHiderSettingsScreen extends OptionsSubScreen {
 
         optionElementFactory.addElementAsWidget(cyclingWidget);
         optionElementFactory.addElementAsWidget(armorHiderOffWidget);
+        //?}
 
+        //? if < 1.21.9 {
+        /*// For < 1.21.9, use OptionInstance approach since addElementAsWidget doesn't work for arbitrary widgets
+        var combatDetectionOption = optionElementFactory.buildBooleanOption(
+                combatDetectionServerText,
+                ArmorHiderClient.isCurrentPlayerSinglePlayerHostOrAdmin
+                        ? Component.translatable("armorhider.options.combat_detection_server.tooltip")
+                        : Component.translatable("armorhider.options.combat_detection_server.tooltip.disabled"),
+                null,
+                serverCombatDetectionValue,
+                this::setServerCombatDetection
+        );
+
+        var forceOffOption = optionElementFactory.buildBooleanOption(
+                forceArmorHiderOffText,
+                ArmorHiderClient.isCurrentPlayerSinglePlayerHostOrAdmin
+                        ? Component.translatable("armorhider.options.force_armor_hider_off.tooltip")
+                        : Component.translatable("armorhider.options.force_armor_hider_off.tooltip.disabled"),
+                null,
+                serverForcingArmorHiderOffValue,
+                this::setForceArmorHiderOff
+        );
+
+        optionElementFactory.addSimpleOptionAsWidget(combatDetectionOption);
+        optionElementFactory.addSimpleOptionAsWidget(forceOffOption);
+        *///?}
+
+        //? if >= 1.21.9
         var regularCategory = new MultiLineTextWidget(RenderUtilities.getRowWidth(list), 20, Component.translatable("armorhider.options.regular.title"), this.getFont());
+        //? if < 1.21.9
+        //var regularCategory = new MultiLineTextWidget(RenderUtilities.getRowWidth(list), 20, Component.translatable("armorhider.options.regular.title"), net.minecraft.client.Minecraft.getInstance().font);
         optionElementFactory.addElementAsWidget(regularCategory);
 
         var settingsToUse = optionElementFactory.buildBooleanOption(

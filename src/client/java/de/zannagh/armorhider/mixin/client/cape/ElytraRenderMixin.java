@@ -1,3 +1,4 @@
+//? if >= 1.21.9 {
 package de.zannagh.armorhider.mixin.client.cape;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -49,3 +50,100 @@ public class ElytraRenderMixin {
         ArmorRenderPipeline.clearContext();
     }
 }
+//?}
+
+//? if < 1.21.9 {
+/*package de.zannagh.armorhider.mixin.client.cape;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import de.zannagh.armorhider.rendering.ArmorRenderPipeline;
+import de.zannagh.armorhider.util.ItemsUtil;
+import net.minecraft.client.model.ElytraModel;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.layers.ElytraLayer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(ElytraLayer.class)
+public class ElytraRenderMixin<T extends LivingEntity, M extends EntityModel<T>> {
+
+    @Inject(
+            method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V",
+            at = @At(value = "HEAD"),
+            cancellable = true
+    )
+    private void interceptElytraRender(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) {
+        ArmorRenderPipeline.setupContext(ItemsUtil.ELYTRA_ITEM_STACK, EquipmentSlot.CHEST, entity);
+
+        if (ArmorRenderPipeline.noContext() || !ArmorRenderPipeline.shouldModifyEquipment()) {
+            ArmorRenderPipeline.clearContext();
+            return;
+        }
+
+        if (!ArmorRenderPipeline.getCurrentModification().playerConfig().opacityAffectingElytra.getValue()) {
+            ArmorRenderPipeline.clearContext();
+            return;
+        }
+
+        if (ArmorRenderPipeline.shouldHideEquipment()) {
+            ArmorRenderPipeline.clearContext();
+            if (ci != null) {
+                ci.cancel();
+            }
+        }
+    }
+
+    @WrapOperation(
+            method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/RenderType;armorCutoutNoCull(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/RenderType;"
+            )
+    )
+    private RenderType useTranslucentRenderType(ResourceLocation texture, Operation<RenderType> original) {
+        if (ArmorRenderPipeline.hasActiveContext() && ArmorRenderPipeline.shouldModifyEquipment()) {
+            float alpha = ArmorRenderPipeline.getTransparencyAlpha();
+            if (alpha < 1.0f && alpha > 0.0f) {
+                // Use translucent render type for partial transparency
+                return RenderType.entityTranslucent(texture);
+            }
+        }
+        return original.call(texture);
+    }
+
+    @WrapOperation(
+            method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/model/ElytraModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"
+            )
+    )
+    private void applyElytraTransparency(ElytraModel<T> instance, PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha, Operation<Void> original) {
+        float modifiedAlpha = alpha;
+
+        if (ArmorRenderPipeline.hasActiveContext() && ArmorRenderPipeline.shouldModifyEquipment()) {
+            modifiedAlpha = ArmorRenderPipeline.getTransparencyAlpha();
+        }
+
+        original.call(instance, poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, modifiedAlpha);
+    }
+
+    @Inject(
+            method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V",
+            at = @At(value = "RETURN")
+    )
+    private void releaseContext(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) {
+        ArmorRenderPipeline.clearContext();
+    }
+}
+*///?}

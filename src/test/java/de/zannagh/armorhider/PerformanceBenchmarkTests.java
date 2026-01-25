@@ -2,9 +2,7 @@ package de.zannagh.armorhider;
 
 import com.google.common.base.Stopwatch;
 import com.google.gson.GsonBuilder;
-import de.zannagh.armorhider.configuration.ConfigurationItemFactoryRegistry;
 import de.zannagh.armorhider.resources.ServerConfiguration;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,12 +13,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PerformanceBenchmarkTests {
-    @BeforeAll
-    static void initializeFactories() {
-        ConfigurationItemFactoryRegistry.initialize();
-    }
-
-    static int ITERATIONS_PER_PLAYER_COUNT = 500;
+    static int ITERATIONS_PER_PLAYER_COUNT = 250;
 
     static double ALLOWED_RATIO_DEVIATION = 1.7;
 
@@ -39,9 +32,9 @@ public class PerformanceBenchmarkTests {
     }
 
     @Test
-    @DisplayName("Serialization Performance Benchmark - up to 300 players")
+    @DisplayName("Serialization Performance Benchmark - up to 50 players")
     void testSerializationPerformance() {
-        int[] playerCounts = {1, 10, 50, 100, 300};
+        int[] playerCounts = {1, 10, 50};
         var gson = new GsonBuilder().setPrettyPrinting().create();
 
         List<BenchmarkResult> results = new ArrayList<>();

@@ -1,3 +1,4 @@
+//? if >= 1.20.5 {
 package de.zannagh.armorhider.mixin.networking;
 
 import de.zannagh.armorhider.ArmorHider;
@@ -45,3 +46,4 @@ public interface CustomPayloadCodecMixin {
         return modifiedTypes;
     }
 }
+//?}

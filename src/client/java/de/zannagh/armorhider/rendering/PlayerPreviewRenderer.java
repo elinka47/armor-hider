@@ -1,3 +1,4 @@
+//? if >= 1.21 {
 package de.zannagh.armorhider.rendering;
 
 import net.minecraft.client.Minecraft;
@@ -13,7 +14,8 @@ public class PlayerPreviewRenderer {
     private static final int armorHiderSegmentRow = 5;
 
     public static void renderPlayerPreview(GuiGraphics graphics, OptionsList body, int mouseX, int mouseY) {
-        if (!(Minecraft.getInstance().player instanceof AbstractClientPlayer player)) {
+        AbstractClientPlayer player = (AbstractClientPlayer) Minecraft.getInstance().player;
+        if (player == null) {
             return;
         }
 
@@ -79,3 +81,4 @@ public class PlayerPreviewRenderer {
         graphics.disableScissor();
     }
 }
+//?}

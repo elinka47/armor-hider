@@ -282,6 +282,7 @@ public class ServerConfigurationTests {
         assertTrue(currentConfig.hasChangedFromSerializedContent());
     }
 
+    //? if >= 1.20.5 {
     @Test
     @DisplayName("Compressed packet size test - up to 500 players")
     void testCompressedPacketSizes() {
@@ -326,6 +327,7 @@ public class ServerConfigurationTests {
         }
         assertTrue(allSizesAcceptable, "All packet sizes within acceptable limits");
     }
+    //?}
 
     @Test
     @DisplayName("Migration from 0.4.x (v3) via Gson network deserialization")

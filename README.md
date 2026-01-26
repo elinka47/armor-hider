@@ -25,17 +25,49 @@ clients.
 
 ## Settings
 
-* **Helmet**: Opacity slider (0-100%) for head slot, also applies to block like head items (e.g. skeleton block) if
-  enabled via
-* **Affect Skulls**: Enable or disable that skulls are affected by the helmet setting
-* **Chestplate**: Opacity slider (0-100%) for chest slot, also applies to Elytra if enabled via
-* **Affect Elytra**: Enable or disable that Elytra are affected by the chestplate setting
+### Armor Opacity
+
+* **Helmet**: Opacity slider (0-100%) for head slot
+* **Affect Skulls**: When enabled, helmet opacity changes also affect skulls (non-armor head items like skeleton or
+  creeper skulls)
+* **Chestplate**: Opacity slider (0-100%) for chest slot
+* **Affect Elytra**: When enabled, chestplate opacity also affects elytra
 * **Leggings**: Opacity slider (0-100%) for legs slot
 * **Boots**: Opacity slider (0-100%) for boot slot
-* **Combat Detection**: Show your armor when you enter combat with another player or a mob
-* **Armor in combat (server)**: Enable or disable that the combat detection is respected by an individual's player
-  setting - when enabled, the client's setting is overridden and armor is always shown in combat, when disabled,
-  individual client's settings will be used
+
+### Other Settings
+
+* **Combat Detection**: Enables detection of combat to show your armor when you are in combat
+* **Apply your settings to unknown players**: Whether to use your own opacity settings or the default settings (armor
+  shown normally, as without the mod) when a player's settings cannot be determined — for example when using the mod
+  only client-side on an unmodded server (see [Preferences Matrix](#preferences-matrix) below)
+* **Disable Armor Hider features**: Globally disable Armor Hider on your client. If the server is forcing Armor Hider
+  off, this setting is ignored as armor will be shown regardless
+* **Disable Armor Hider for other players**: Disable Armor Hider rendering for other players' armors only. If the
+  server is forcing Armor Hider off or the global disable is set, this setting is ignored
+
+### Administrative Settings
+
+These settings require operator permissions and apply server-wide, overriding individual player preferences.
+
+* **Armor in combat (server)**: Forces combat detection server-wide — when enabled, armor is always shown for any
+  player in combat, overriding each player's individual combat detection setting
+* **Force Armor Hider off for all players**: Forces Armor Hider to be disabled for all players on the server,
+  overriding all individual settings
+
+## Preferences Matrix
+
+Your locally set preferences get sent to the server on change or join. Players joining a server will retrieve the
+preference library from the server in order to apply other players' preferences on their client.
+
+The following matrix shows how preferences are resolved depending on where the mod is installed:
+
+| Mod on Server | Mod on Client | Behavior |
+|:---:|:---:|---|
+| Yes | Yes | Full functionality. Your preferences are synced to the server and relayed to other players. You see other players' actual configured armor opacity. |
+| Yes | No | No effect. The server stores preferences but the vanilla client cannot render transparency changes. |
+| No | Yes | Client-side only. Other players' preferences cannot be determined. Depending on the **"Apply your settings to unknown players"** setting: **ON** — your own opacity settings are applied to all players; **OFF** — default settings are used (armor rendered normally, as without the mod). |
+| No | No | No effect. The mod is not present. |
 
 ## Demo
 

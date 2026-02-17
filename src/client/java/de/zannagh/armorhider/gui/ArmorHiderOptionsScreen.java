@@ -1,4 +1,4 @@
-// The options screen for 1.21/1.21.1, not used in >= 1.21.9 or 1.20.x
+// The options screen for 1.21 - 1.21.8, not used in >= 1.21.9 or 1.20.x
 
 //? if >= 1.21 && < 1.21.9 {
 
@@ -64,7 +64,8 @@ public class ArmorHiderOptionsScreen extends OptionsSubScreen {
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
+        //? if < 1.21.4
+        //this.renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
     }
 
@@ -136,6 +137,17 @@ public class ArmorHiderOptionsScreen extends OptionsSubScreen {
             this::setBootsTransparency
         );
         optionElementFactory.addSimpleOptionAsWidget(bootsOption);
+
+        var offhandOption = optionElementFactory.buildDoubleOption(
+                "armorhider.offhand.transparency",
+                Component.translatable("armorhider.options.offhand.tooltip"),
+                Component.translatable("armorhider.options.offhand.tooltip_narration"),
+                currentValue -> Component.translatable("armorhider.options.offhand.button_text",
+                        String.format("%.0f%%", currentValue * 100)),
+                ArmorHiderClient.CLIENT_CONFIG_MANAGER.getValue().offHandOpacity.getValue(),
+                this::setOffhandTransparency
+        );
+        optionElementFactory.addSimpleOptionAsWidget(offhandOption);
 
         OptionInstance<Boolean> enableCombatDetection = optionElementFactory.buildBooleanOption(
             Component.translatable("armorhider.options.combat_detection.title"),
@@ -219,6 +231,11 @@ public class ArmorHiderOptionsScreen extends OptionsSubScreen {
 
     private void setBootsTransparency(double value) {
         ArmorHiderClient.CLIENT_CONFIG_MANAGER.getValue().bootsOpacity.setValue(value);
+        settingsChanged = true;
+    }
+
+    private void setOffhandTransparency(double value) {
+        ArmorHiderClient.CLIENT_CONFIG_MANAGER.getValue().offHandOpacity.setValue(value);
         settingsChanged = true;
     }
 

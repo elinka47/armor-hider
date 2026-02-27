@@ -1,0 +1,6 @@
+{
+  "required": true,
+  "package": "de.zannagh.armorhider.mixin.client",
+  "plugin": "de.zannagh.armorhider.mixin.MixinPlugin",
+  "compatibilityLevel": "JAVA_${java_version}"
+}

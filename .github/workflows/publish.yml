@@ -28,6 +28,11 @@ env:
   PUBLISH_TO_MODRINTH: 'true'
 
 jobs:
+  check-runner:
+    name: Check Runner
+    uses: ./.github/workflows/check-runner.yml
+    secrets: inherit
+
   analyze:
     name: Analyze Changes
     runs-on: ubuntu-latest
@@ -39,16 +44,11 @@ jobs:
       prerelease_number: ${{ steps.version.outputs.preReleaseNumber }}
       full_semver: ${{ steps.version.outputs.fullSemVer }}
       commits_since: ${{ steps.version.outputs.commitsSinceVersionSource }}
-      supported_versions: ${{ steps.versions.outputs.matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
-      - name: Read Supported Versions
-        id: versions
-        run: echo "matrix=$(jq -c '.' supportedVersions.json)" >> $GITHUB_OUTPUT
 
       - name: Calculate Version
         id: version
@@ -134,12 +134,16 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
-    needs: [analyze, check-modrinth]
+    runs-on: ${{ fromJSON(needs.check-runner.outputs.runner || '["ubuntu-latest"]') }}
+    needs: [analyze, check-modrinth, check-runner]
     if: "!cancelled() && needs.analyze.result == 'success'"
+    defaults:
+      run:
+        shell: bash
     outputs:
       mod_version: ${{ steps.mod-ver.outputs.version }}
       is_prerelease: ${{ steps.mod-ver.outputs.is_prerelease }}
+      supported_versions: ${{ steps.versions.outputs.matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -160,17 +164,28 @@ jobs:
           prerelease-number: ${{ needs.analyze.outputs.prerelease_number }}
           commits-since: ${{ needs.analyze.outputs.commits_since }}
 
-      - name: Build
+      - name: Build & Stage Artifacts
         run: |
-          ./gradlew build \
+          ./gradlew stageArtifacts \
             -PsemVer="${{ steps.mod-ver.outputs.version }}" \
             -Pprerelease="${{ steps.mod-ver.outputs.is_prerelease }}"
+
+      - name: Read Supported Versions
+        id: versions
+        run: |
+          MATRIX=$(jq -c '[
+            (.fabric // {} | keys[] | {minecraft: ., loader: "fabric"}),
+            (.neoforge // {} | keys[] | {minecraft: ., loader: "neoforge"})
+          ]' staging/versions.json)
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v6
         with:
           name: armor-hider-${{ steps.mod-ver.outputs.version }}
-          path: versions/**/build/libs/*.jar
+          path: |
+            staging/*.jar
+            staging/versions.json
           if-no-files-found: error
 
   changelog:
@@ -245,7 +260,7 @@ jobs:
           path: artifacts
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.4.2
         with:
           tag_name: ${{ github.event.release.tag_name }}
           files: artifacts/**/*.jar
@@ -264,7 +279,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        minecraft: ${{ fromJSON(needs.analyze.outputs.supported_versions) }}
+        include: ${{ fromJSON(needs.build.outputs.supported_versions) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -275,14 +290,23 @@ jobs:
           name: armor-hider-${{ needs.build.outputs.mod_version }}
           path: artifacts
 
+      - name: Get game versions
+        id: game-versions
+        run: |
+          VERSIONS=$(jq -r '."${{ matrix.loader }}"."${{ matrix.minecraft }}" // ["${{ matrix.minecraft }}"] | .[]' artifacts/versions.json)
+          echo "list<<EOF" >> $GITHUB_OUTPUT
+          echo "$VERSIONS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Prepare Modrinth Upload
         id: modrinth
         uses: ./.github/actions/prepare-modrinth-upload
         with:
-          minecraft-version: ${{ matrix.minecraft }}
+          display-version: ${{ matrix.minecraft }}
           mod-version: ${{ needs.build.outputs.mod_version }}
           is-prerelease: ${{ needs.build.outputs.is_prerelease }}
           artifact-path: artifacts
+          loader: ${{ matrix.loader }}
 
       - name: Preview Modrinth Upload
         if: steps.modrinth.outputs.found == 'true'
@@ -298,8 +322,8 @@ jobs:
           echo "  Version:       ${{ steps.modrinth.outputs.version_number }}"
           echo "  Display Name:  ${{ steps.modrinth.outputs.version_name }}"
           echo "  Version Type:  ${{ steps.modrinth.outputs.version_type }}"
-          echo "  Game Version:  ${{ matrix.minecraft }}"
-          echo "  Loader:        fabric"
+          echo "  Game Versions: ${{ matrix.minecraft }}"
+          echo "  Loader:        ${{ matrix.loader }}"
           echo ""
           echo "Changelog:"
           echo "---"
@@ -325,8 +349,9 @@ jobs:
           name: ${{ steps.modrinth.outputs.version_name }}
           version: ${{ steps.modrinth.outputs.version_number }}
           version-type: ${{ steps.modrinth.outputs.version_type }}
-          loaders: fabric
-          game-versions: ${{ matrix.minecraft }}
+          loaders: ${{ matrix.loader }}
+          game-versions: |
+            ${{ steps.game-versions.outputs.list }}
           game-version-filter: any
           changelog: ${{ needs.changelog.outputs.user-facing }}
           modrinth-featured: false
@@ -342,6 +367,13 @@ jobs:
     needs: [analyze, validate-version, check-modrinth, build, changelog, create-prerelease, upload-to-release, publish-modrinth]
     if: always()
     steps:
+      - name: Download Artifacts
+        if: inputs.dry_run == true && needs.build.result == 'success'
+        uses: actions/download-artifact@v7
+        with:
+          name: armor-hider-${{ needs.build.outputs.mod_version }}
+          path: artifacts
+
       - name: Generate Summary
         uses: zannagh/versionizer/workflow-summary@v1
         with:
@@ -369,3 +401,33 @@ jobs:
 
             - **Version Already Exists**: `${{ needs.check-modrinth.outputs.version_exists }}`
             - **Publish Enabled**: `${{ env.PUBLISH_TO_MODRINTH }}`
+
+      - name: Modrinth Upload Preview
+        if: inputs.dry_run == true && needs.build.result == 'success'
+        run: |
+          MOD_VERSION="${{ needs.build.outputs.mod_version }}"
+          IS_PRERELEASE="${{ needs.build.outputs.is_prerelease }}"
+          VERSION_TYPE="release"
+          if [[ "$IS_PRERELEASE" == "true" ]]; then VERSION_TYPE="beta"; fi
+
+          TOTAL=0
+          {
+            echo "## Modrinth Upload Preview (Dry Run)"
+            echo ""
+            echo "The following versions **would** be published to Modrinth:"
+            echo ""
+            echo "| Loader | Version Group | Game Versions | Modrinth Version Name | Type |"
+            echo "| ------ | ------------- | ------------- | --------------------- | ---- |"
+
+            for LOADER in fabric neoforge; do
+              for GROUP in $(jq -r ".${LOADER} | keys[]" artifacts/versions.json); do
+                GAME_VERSIONS=$(jq -r ".${LOADER}.\"${GROUP}\" // [\"${GROUP}\"] | join(\", \")" artifacts/versions.json)
+                DISPLAY_LOADER="${LOADER^}"
+                echo "| ${DISPLAY_LOADER} | ${GROUP} | ${GAME_VERSIONS} | [${DISPLAY_LOADER}] ${GROUP} - ${MOD_VERSION} | ${VERSION_TYPE} |"
+                TOTAL=$((TOTAL + 1))
+              done
+            done
+
+            echo ""
+            echo "**Total uploads: $TOTAL**"
+          } >> "$GITHUB_STEP_SUMMARY"

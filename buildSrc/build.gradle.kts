@@ -4,14 +4,13 @@ plugins {
 
 repositories {
     maven("https://maven.fabricmc.net/")
+    maven("https://maven.neoforged.net/releases/")
     mavenCentral()
     gradlePluginPortal()
 }
 
 dependencies {
     implementation("dev.kikugie:stonecutter:0.8.3")
-}
-
-tasks.withType<JavaCompile>().configureEach {
-    options.release.set(25)
+    implementation("com.google.code.gson:gson:2.13.1")
+    implementation("net.fabricmc:fabric-loom:${property("loom_version")}")
 }

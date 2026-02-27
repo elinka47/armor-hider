@@ -1,6 +1,7 @@
 pluginManagement {
     repositories {
         maven("https://maven.fabricmc.net/")
+        maven("https://maven.neoforged.net/releases/")
         mavenCentral()
         gradlePluginPortal()
     }
@@ -9,19 +10,39 @@ pluginManagement {
 plugins {
     id("dev.kikugie.stonecutter") version "0.8.3"
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+    id("com.gradle.develocity") version("4.3.2")
 }
 
-@Suppress("UNCHECKED_CAST")
-val supportedVersions = groovy.json.JsonSlurper().parse(file("supportedVersions.json")) as List<String>
-
 stonecutter {
+    kotlinController = true
+    centralScript = "build.gradle.kts"
+    
+    val fabricVersions = listOf(
+        "1.20", "1.20.1",
+        "1.21", "1.21.1",
+        "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8",
+        "1.21.9", "1.21.10", "1.21.11",
+        "26.1-snapshot-1", "26.1-snapshot-2", "26.1-snapshot-3",
+        "26.1-snapshot-4", "26.1-snapshot-5", "26.1-snapshot-6",
+        "26.1-snapshot-7", "26.1-snapshot-8", "26.1-snapshot-9",
+    )
+    val neoforgeVersions = listOf(
+        "1.21", "1.21.1", "1.21.4", "1.21.5", "1.21.6", "1.21.7", "1.21.8",
+        "1.21.9", "1.21.10", "1.21.11",
+    )
+
     create(rootProject) {
-        versions(*supportedVersions.toTypedArray())
-        vcsVersion = "1.21.11" // Latest stable
-        
-        // Use different build files for obfuscated (1.x) vs unobfuscated (26.x) versions
-        mapBuilds { _, data ->
-            if (data.version.startsWith("26.")) "build-deobf.gradle.kts" else "build.gradle.kts"
+        vcsVersion = "fabric-1.21.11" // Latest stable
+
+        branch("common") {
+            fabricVersions.forEach { version("fabric-$it", it) }
+            neoforgeVersions.forEach { version("neoforge-$it", it) }
+        }
+        branch("fabric") {
+            fabricVersions.forEach { version("fabric-$it", it) }
+        }
+        branch("neoforge") {
+            neoforgeVersions.forEach { version("neoforge-$it", it) }
         }
     }
 }

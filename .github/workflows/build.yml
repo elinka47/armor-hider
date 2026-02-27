@@ -15,9 +15,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check-runner:
+    name: Check Runner
+    uses: ./.github/workflows/check-runner.yml
+    secrets: inherit
+
   build:
     name: Build & Test
-    runs-on: ubuntu-latest
+    needs: check-runner
+    runs-on: ${{ fromJSON(needs.check-runner.outputs.runner || '["ubuntu-latest"]') }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -31,12 +40,12 @@ jobs:
         id: version
         uses: zannagh/versionizer/calculate-version@v1
 
-      - name: Build
-        run: ./gradlew build -PsemVer="${{ steps.version.outputs.fullSemVer }}" -Pprerelease="true"
+      - name: Build & Stage Artifacts
+        run: ./gradlew stageArtifacts -PsemVer="${{ steps.version.outputs.fullSemVer }}" -Pprerelease="true"
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v6
         with:
           name: armor-hider-${{ steps.version.outputs.fullSemVer }}
-          path: versions/**/build/libs/*.jar
+          path: staging/*.jar
           if-no-files-found: warn

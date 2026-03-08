@@ -1,79 +1,79 @@
 # Armor Hider
-
-#### GitHub
-[![Build](https://github.com/zannagh/armor-hider/actions/workflows/build.yml/badge.svg)](https://github.com/zannagh/armor-hider/actions/workflows/build.yml)
-[![Publish](https://github.com/zannagh/armor-hider/actions/workflows/publish.yml/badge.svg)](https://github.com/zannagh/armor-hider/actions/workflows/publish.yml)
-[![Latest](https://img.shields.io/github/v/release/zannagh/armor-hider?logo=github&label=Latest%20Release&color=lime)](https://github.com/zannagh/armor-hider/releases)
-[![LatestPre](https://img.shields.io/github/v/release/zannagh/armor-hider?include_prereleases&label=Latest%20Prerelease&logo=github)](https://github.com/zannagh/armor-hider/releases)
-
-#### Platforms
+  
+[![Latest](https://img.shields.io/github/v/release/zannagh/armor-hider?logo=github&label=Latest%20Release&color=green)](https://github.com/zannagh/armor-hider/releases)
+[![LatestPre](https://img.shields.io/github/v/release/zannagh/armor-hider?include_prereleases&label=Latest%20(Pre)Release&logo=github)](https://github.com/zannagh/armor-hider/releases)
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/zannaghs-armor-hider?logo=modrinth&label=Modrinth)](https://modrinth.com/mod/zannaghs-armor-hider)
 [![Curseforge Downloads](https://img.shields.io/curseforge/dt/1475841?logo=curseforge&style=flat&label=CurseForge)](https://www.curseforge.com/minecraft/mc-mods/armor-hider)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/AMwbYqdmQb)
 
-#### Supported Game Versions and Loaders
-![Static Badge](https://img.shields.io/badge/Fabric-1.20%20%3E%201.20.1-blue?logo=fabric)
-![Static Badge](https://img.shields.io/badge/1.21%20%3E%201.21.1-blue)
-![Static Badge](https://img.shields.io/badge/1.21.4%20%3E%201.21.11-blue)
-![Static Badge](https://img.shields.io/badge/26.1%20snapshot-blue)
-
-![Static Badge](https://img.shields.io/badge/Quilt-1.20%20%3E%201.20.1-purple)
-![Static Badge](https://img.shields.io/badge/1.21%20%3E%201.21.1-purple)
-![Static Badge](https://img.shields.io/badge/1.21.4%20%3E%201.21.11-purple)
-![Static Badge](https://img.shields.io/badge/26.1%20snapshot-purple)
-
-![Static Badge](https://img.shields.io/badge/NeoForge-1.20%20%3E%201.20.1-orange)
-![Static Badge](https://img.shields.io/badge/1.21%20%3E%201.21.1-orange)
-![Static Badge](https://img.shields.io/badge/1.21.4%20%3E%201.21.11-orange)
-
-A small server/client side mod to alter transparency of armor items (relayed to other players via server).
-
 <p align="center">
-<img width="359" height="400" alt="IngamePreview" src="https://github.com/user-attachments/assets/81731706-ef87-43e7-8dc3-bf7ca1f0e91a" />
+A mod to alter the transparency or fully hide equipment items with multiplayer support, without any dependencies - supporting a wide range of game versions and available for Fabric, Quilt and NeoForge.
 </p>
 
-This mod is heavily inspired by Show Me Your Skin! (https://github.com/enjarai/show-me-your-skin).
-
-The settings are accessible via "Skin Customization" in game (or via 'Zannagh's Armor Hider' in game options, depending on game version and available APIs):
 <p align="center">
-<img width="495" height="400" alt="IngameSettings" src="https://github.com/user-attachments/assets/d279bf39-9e15-4350-b624-c21946295ddc" />
+<img width="881" height="608" alt="Armor Hider Overview" src="https://github.com/user-attachments/assets/3e0d3758-afc6-41c0-b622-8eaed2ac6916" />
 </p>
 
-Your locally set preferences (on your client) will get sent to the server on change or join and vice versa and player
-joining a server will retrieve the config library from the server in order to apply the player preferences to other
-clients.
+[![Issues](https://img.shields.io/github/issues/zannagh/armor-hider?label=Open%20Issues&logo=github)](https://github.com/zannagh/armor-hider/issues)
+[![OpenIssues](https://img.shields.io/github/issues-closed/zannagh/armor-hider?label=Closed%20Issues&color=green&logo=github)](https://github.com/zannagh/armor-hider/issues)
 
-## Settings
+I track issues (including feature requests) via GitHub and do my best to close out any bugs timely (plus, I get way too excited about new features myself..). If you don't have an account, feel free to join the Discord server and let me know there.
+
+*Demo*
+
+![Demo](https://github.com/user-attachments/assets/5e799db8-3f8c-4e30-b1e5-465d100f7b06)
+
+---
+
+## Customizability
+Find Armor Hider's settings integrated into the game via "Skin Customization" in the game settings (or via 'Zannagh's Armor Hider' on older game versions). When in-game, the mod settings feature a live-preview of your changes.
+
+<p align="center">
+<img width="960" height="540" alt="Armor Hider Ingame Settings" src="https://github.com/user-attachments/assets/a8d15a03-bfd8-4fb1-a166-6d6118e523e2" />
+</p>
 
 ### Armor Opacity
+The mod allows you to define an opacity between 0% (hidden, cancelling the rendering) and 100% (the mod doesn't do anything) for each armor item slot. In addition, it's possible to specify whether skull items (skeleton/wither/... skull) should be affected by the helmet setting and if Elytras should be affected by the chestslot setting.
+Furthermore, you can selectively hide the enchantment glint on any of the slots.
+If you'd like to have armors visible in combat, you can choose whether combat will temporarily show your armor or not, see [Combat Detection](#combat-detection) below.
 
-* **Helmet**: Opacity slider (0-100%) for head slot
-* **Affect Skulls**: When enabled, helmet opacity changes also affect skulls (non-armor head items like skeleton or
-  creeper skulls)
-* **Chestplate**: Opacity slider (0-100%) for chest slot
-* **Affect Elytra**: When enabled, chestplate opacity also affects elytra
-* **Leggings**: Opacity slider (0-100%) for legs slot
-* **Boots**: Opacity slider (0-100%) for boot slot
-* **Offhand**: Opacity slider (0-100%) for offhand slot
+### Offhand Opacity
+Armor Hider additionally offers to hide the offhand slot if you don't your fancy skin obstructed by a shield or other items.
 
-### Other Settings
+## Synchronization
+If the mod is installed on the server you're joining, all of your locally preferences will get sent to the server on change or join. The server-side mod then takes care of relaying your preferences to all other clients. That way, if the mod is present on the server, anyone will always see your avatar as you'd like to see your avatar (including combat detection, glint and other features).
 
-* **Combat Detection**: Enables detection of combat to show your armor when you are in combat with a fade-off effect
+If a host is not yet running the mod, there's a settings available which lets you define whether the then 'unknown' players should not have their armor rendering affected at all or carry over your own settings.
+
+## Additional Features
+<p align="center">
+<img width="960" height="540" alt="Armor Hider Additional Settings" src="https://github.com/user-attachments/assets/eb4cc6d7-50b2-4210-b57c-9d04fcdf15d9" />
+</p>
+
 * **Apply your settings to unknown players**: Whether to use your own opacity settings or the default settings (armor
   shown normally, as without the mod) when a player's settings cannot be determined — for example when using the mod
   only client-side on an unmodded server (see [Server communication matrix](#server-communication-matrix) below)
 * **Disable Armor Hider features**: Globally disable Armor Hider on your client. If the server is forcing Armor Hider
   off, this setting is overridden
-* **Disable Armor Hider for other players**: Disable Armor Hider rendering for other players' armors only. If the
-  server is forcing Armor Hider off or the global disable is set, this setting is ignored
+* **Disable Armor Hider for other players**: Disable Armor Hider rendering for other players' armors only. If the server is forcing Armor Hider off or the global disable is set, this setting is ignored
 
 ### Administrative Settings
 
-These settings require moderator/operator permissions (due to compatibility reasons, the mod only checks for permission level >= 3) and are applied server-wide, overriding individual player preferences.
+For hosts, these settings require moderator/operator permissions (due to compatibility reasons, the mod only checks for permission level >= 3) and are applied server-wide, overriding individual player preferences.
 
-* **Armor in combat (server)**: Forces combat detection server-wide — when enabled, armor is always shown for any
-  player in combat, overriding each player's individual combat detection setting
-* **Force Armor Hider off for all players**: Forces Armor Hider to be disabled for all players on the server (useful when you're running a PvP server and don't want people to hide their armor or other's armors from their perspective)
+* **Armor in combat (server)**: Forces combat detection server-wide — when enabled, armor is always shown for any player in combat, overriding each player's individual combat detection setting - useful for PvP servers
+* **Force Armor Hider off for all players**: Forces Armor Hider to be disabled for all players on the server (especially useful when you're running a PvP server and don't want people to hide other player's armors)
+
+### Combat Detection
+<details>
+<summary>Combat Detection</summary>
+
+**Enabled Combat Detection**
+![CombatDetection](https://github.com/user-attachments/assets/00f191e3-3997-4b83-ac41-7c169aae9d52)
+
+**Disabled Combat Detection**
+![NoCombatDetection](https://github.com/user-attachments/assets/fd7af6a4-8f5d-4a42-99bb-57804bc7ecca)
+</details>
 
 ## Server Communication Matrix
 
@@ -89,46 +89,36 @@ The following matrix shows how preferences are resolved depending on where the m
 | No | Yes | Client-side only. Other players' preferences cannot be determined. Depending on the **"Apply your settings to unknown players"** setting: **ON** — your own opacity settings are applied to all players; **OFF** — default settings are used (armor rendered normally, as without the mod). |
 | No | No | No effect. The mod is not present. |
 
-## Demo
-
-<details>
-<summary>Settings</summary>
-
-**Main Menu Settings**
-![MainMenuSettings](https://github.com/user-attachments/assets/f20d0847-ea5e-4107-a87c-bc7b620233cd)
-
-**Ingame Settings (Admin)**
-![IngameSettings](https://github.com/user-attachments/assets/91ef2bba-84a7-4888-b823-af048e31b89a)
-
-</details>
-<details>
-<summary>Combat Detection</summary>
-
-**Enabled Combat Detection**
-![CombatDetection](https://github.com/user-attachments/assets/00f191e3-3997-4b83-ac41-7c169aae9d52)
-
-**Disabled Combat Detection**
-![NoCombatDetection](https://github.com/user-attachments/assets/fd7af6a4-8f5d-4a42-99bb-57804bc7ecca)
-</details>
-
 ## Community
 
 Join the [Discord server](https://discord.gg/AMwbYqdmQb) for support, discussion, and feature requests.
 
 ## Issues and Feature Requests
 
-Feel free to create an issue on the GitHub repository or reach out on Discord to make me aware of problems or ideas
-that could make this mod better.
+As mentioned before, feel free to create an issue on the GitHub repository or reach out on Discord to make me aware of problems or ideas that could make this mod better.
+
+## Supported Game Versions and Loaders
+![Static Badge](https://img.shields.io/badge/Fabric-1.20%20%3E%201.20.1-blue?logo=fabric)
+![Static Badge](https://img.shields.io/badge/1.21%20%3E%201.21.1-blue)
+![Static Badge](https://img.shields.io/badge/1.21.4%20%3E%201.21.11-blue)
+![Static Badge](https://img.shields.io/badge/26.1%20snapshot-blue)
+
+![Static Badge](https://img.shields.io/badge/Quilt-1.20%20%3E%201.20.1-purple)
+![Static Badge](https://img.shields.io/badge/1.21%20%3E%201.21.1-purple)
+![Static Badge](https://img.shields.io/badge/1.21.4%20%3E%201.21.11-purple)
+![Static Badge](https://img.shields.io/badge/26.1%20snapshot-purple)
+
+![Static Badge](https://img.shields.io/badge/NeoForge-1.20%20%3E%201.20.1-orange)
+![Static Badge](https://img.shields.io/badge/1.21%20%3E%201.21.1-orange)
+![Static Badge](https://img.shields.io/badge/1.21.4%20%3E%201.21.11-orange)
 
 ## Versioning & Releases
 
-All Minecraft versions are built from the `main` branch using [Stonecutter](https://stonecutter.kikugie.dev/) for
-multi-version support. [GitVersion](https://gitversion.net/) handles semantic versioning automatically.
+All Minecraft versions are built from the `main` branch using [Stonecutter](https://stonecutter.kikugie.dev/) for multi-version support. [GitVersion](https://gitversion.net/) handles semantic versioning automatically. On CI, the version property is passed to the gradle build.
 
 **Release flow:**
 
-- **Prereleases** are created automatically on every push to `main` that includes code changes (commits prefixed
-  with `ci:`, `docs:`, `build:`, or `chore:` are skipped)
+- **Prereleases** are created automatically on every push to `main` that includes code changes (commits prefixed with `ci:`, `docs:`, `build:`, or `chore:` are skipped)
 - **Releases** are created manually via GitHub Releases with version validation
 - All versions are published to [Modrinth](https://modrinth.com/mod/zannaghs-armor-hider) automatically
 - All versions are published to [CurseForge](https://www.curseforge.com/minecraft/mc-mods/armor-hider) automatically

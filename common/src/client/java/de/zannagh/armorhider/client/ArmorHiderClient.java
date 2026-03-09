@@ -3,6 +3,7 @@ package de.zannagh.armorhider.client;
 import de.zannagh.armorhider.ArmorHider;
 import de.zannagh.armorhider.config.ClientConfigManager;
 import de.zannagh.armorhider.networking.ClientCommunicationManager;
+import de.zannagh.armorhider.scopes.ScopeProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -15,12 +16,12 @@ import oshi.util.tuples.Pair;
 public class ArmorHiderClient {
 
     public static Boolean isCurrentPlayerSinglePlayerHostOrAdmin = false;
-    public static ClientConfigManager CLIENT_CONFIG_MANAGER;
+    public static ClientConfigManager CLIENT_CONFIG_MANAGER = new ClientConfigManager();
+    public static ScopeProvider SCOPE_PROVIDER = new ScopeProvider();
 
     public static void init() {
         ArmorHider.LOGGER.info("Armor Hider client initializing...");
         ClientCommunicationManager.initClient();
-        CLIENT_CONFIG_MANAGER = new ClientConfigManager();
     }
     
     public static @NonNull Boolean isClientConnectedToServer() {
@@ -35,10 +36,7 @@ public class ArmorHiderClient {
             return ClientConfigManager.DEFAULT_PLAYER_NAME;
         }
         Component displayText = clientPlayer.getDisplayName();
-        if (displayText == null) {
-            return ClientConfigManager.DEFAULT_PLAYER_NAME;
-        }
-        return displayText.getString();
+        return displayText.getString().isEmpty() ? ClientConfigManager.DEFAULT_PLAYER_NAME : displayText.getString();
     }
 
     @Contract("_ -> new")
@@ -63,6 +61,4 @@ public class ArmorHiderClient {
         }
         return new Pair<>(!profileName.equals(getCurrentPlayerName()), entry);
     }
-
-    
 }

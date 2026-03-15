@@ -1,5 +1,6 @@
 package de.zannagh.armorhider.scopes;
 
+import de.zannagh.armorhider.debug.DebugTracer;
 import de.zannagh.armorhider.rendering.RenderDecisions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,13 +13,10 @@ import net.minecraft.world.entity.EquipmentSlot;
 /**
  * Central manager for the rendering scope hierarchy.
  * All mixin interaction goes through this class.
- *
  * Scope hierarchy invariant:
  *   RenderFrameScope > LevelRenderScope > EntityRenderScope > ItemRenderScope
- *
  * Entering a higher-level scope automatically clears all deeper scopes
  * (safety net for leaked contexts).
- *
  * Thread safety: each ThreadLocal is independent per-thread.
  */
 public final class ScopeProvider {
@@ -36,6 +34,7 @@ public final class ScopeProvider {
         entityRenderScope.remove();
         itemRenderScope.remove();
         renderFrameScope.set(true);
+        DebugTracer.scopeEnterRenderFrame();
     }
 
     /** Called from GameRendererMixin at RETURN. */
@@ -44,6 +43,7 @@ public final class ScopeProvider {
         entityRenderScope.remove();
         levelRenderScope.set(false);
         renderFrameScope.set(false);
+        DebugTracer.scopeExitRenderFrame();
     }
 
     public boolean isInRenderFrame() {
@@ -57,6 +57,7 @@ public final class ScopeProvider {
         entityRenderScope.remove();
         itemRenderScope.remove();
         levelRenderScope.set(true);
+        DebugTracer.scopeEnterLevelRender();
     }
 
     /** Called from GameRendererMixin at renderLevel RETURN. */
@@ -64,6 +65,7 @@ public final class ScopeProvider {
         itemRenderScope.remove();
         entityRenderScope.remove();
         levelRenderScope.set(false);
+        DebugTracer.scopeExitLevelRender();
     }
 
     public boolean isInLevelRender() {
@@ -80,6 +82,7 @@ public final class ScopeProvider {
     public void enterEntityRender() {
         itemRenderScope.remove();
         entityRenderScope.set(EntityRenderScope.SENTINEL);
+        DebugTracer.scopeEnterEntityRender();
     }
 
     /**
@@ -90,6 +93,7 @@ public final class ScopeProvider {
     public void enrichEntityScope(@NotNull LivingEntityRenderState renderState) {
         var identity = EntityIdentityResolver.resolve(renderState);
         entityRenderScope.set(new EntityRenderScope(identity.playerName(), identity.isPlayer()));
+        DebugTracer.scopeEnrichEntity(identity.playerName(), identity.isPlayer());
     }
     //?}
 
@@ -97,6 +101,7 @@ public final class ScopeProvider {
     /*public void enrichEntityScope(@NotNull LivingEntity entity) {
         var identity = EntityIdentityResolver.resolve(entity);
         entityRenderScope.set(new EntityRenderScope(identity.playerName(), identity.isPlayer()));
+        DebugTracer.scopeEnrichEntity(identity.playerName(), identity.isPlayer());
     }
     *///?}
 
@@ -104,6 +109,8 @@ public final class ScopeProvider {
     public void exitEntityRender() {
         itemRenderScope.remove();
         entityRenderScope.remove();
+        EntityIdentityResolver.clearIdentityHint();
+        DebugTracer.scopeExitEntityRender();
     }
 
     public boolean isInEntityRender() {
@@ -121,11 +128,15 @@ public final class ScopeProvider {
      */
     public void enterItemRender(@NotNull ItemRenderScope scope) {
         itemRenderScope.set(scope);
+        DebugTracer.scopeEnterItemRender(scope.slot(),
+                scope.modification().playerConfig().playerName.getValue(),
+                scope.transparency());
     }
 
     /** Called from layer mixins at RETURN/TAIL. */
     public void exitItemRender() {
         itemRenderScope.remove();
+        DebugTracer.scopeExitItemRender();
     }
 
     public boolean hasItemScope() {

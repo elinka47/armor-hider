@@ -2,6 +2,7 @@ package de.zannagh.armorhider.scopes;
 
 import com.mojang.authlib.GameProfile;
 import de.zannagh.armorhider.client.ArmorHiderClient;
+import de.zannagh.armorhider.debug.DebugTracer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 //? if >= 1.21.4
@@ -24,6 +25,24 @@ public final class EntityIdentityResolver {
 
     private EntityIdentityResolver() {}
 
+    /**
+     * Identity hint captured from the entity during {@code extractRenderState},
+     * where we still have access to the actual {@link net.minecraft.world.entity.player.Player}
+     * entity. Used as a reliable fallback when {@code nameTag} is null (which happens
+     * for sneaking players, invisible players, hidden nametags, etc. — not just the local player).
+     */
+    private static final ThreadLocal<Identity> identityHint = new ThreadLocal<>();
+
+    public static void setIdentityHint(Identity hint) {
+        identityHint.set(hint);
+        DebugTracer.identityHintSet(hint.playerName());
+    }
+
+    public static void clearIdentityHint() {
+        identityHint.remove();
+        DebugTracer.identityHintCleared();
+    }
+
     public record Identity(@Nullable String playerName, boolean isPlayer) {}
 
     //? if >= 1.21.9 {
@@ -32,11 +51,20 @@ public final class EntityIdentityResolver {
         boolean isPlayer = renderState instanceof AvatarRenderState;
         if (!isPlayer) return new Identity(null, false);
 
-        boolean isLocalPlayer = renderState.nameTag == null;
-        String name = isLocalPlayer
-                ? ArmorHiderClient.getCurrentPlayerName()
-                : renderState.nameTag.getString();
-        return new Identity(name, true);
+        if (renderState.nameTag != null) {
+            var result = new Identity(renderState.nameTag.getString(), true);
+            DebugTracer.identityResolved("nameTag", result.playerName(), true);
+            return result;
+        }
+
+        Identity hint = identityHint.get();
+        if (hint != null) {
+            DebugTracer.identityResolved("hint", hint.playerName(), hint.isPlayer());
+            return hint;
+        }
+
+        DebugTracer.identityResolved("fallback-null", null, true);
+        return new Identity(null, true);
     }
     //?}
 
@@ -46,11 +74,20 @@ public final class EntityIdentityResolver {
         boolean isPlayer = renderState instanceof PlayerRenderState;
         if (!isPlayer) return new Identity(null, false);
 
-        boolean isLocalPlayer = renderState.nameTag == null;
-        String name = isLocalPlayer
-                ? ArmorHiderClient.getCurrentPlayerName()
-                : renderState.nameTag.getString();
-        return new Identity(name, true);
+        if (renderState.nameTag != null) {
+            var result = new Identity(renderState.nameTag.getString(), true);
+            DebugTracer.identityResolved("nameTag", result.playerName(), true);
+            return result;
+        }
+
+        Identity hint = identityHint.get();
+        if (hint != null) {
+            DebugTracer.identityResolved("hint", hint.playerName(), hint.isPlayer());
+            return hint;
+        }
+
+        DebugTracer.identityResolved("fallback-null", null, true);
+        return new Identity(null, true);
     }
     *///?}
 
@@ -61,6 +98,7 @@ public final class EntityIdentityResolver {
         if (!isPlayer) return new Identity(null, false);
 
         String name = ((Player) entity).getName().getString();
+        DebugTracer.identityResolved("entity-direct", name, true);
         return new Identity(name, true);
     }
     *///?}

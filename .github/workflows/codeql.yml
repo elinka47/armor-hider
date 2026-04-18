@@ -23,9 +23,15 @@ on:
     - cron: '16 20 * * 1'
 
 jobs:
+  check-runner:
+    name: Check Runner
+    uses: ./.github/workflows/check-runner.yml
+    secrets: inherit
+
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    needs: check-runner
+    runs-on: ${{ fromJSON(needs.check-runner.outputs.runner || '["ubuntu-latest"]') }}
     permissions:
       security-events: write
       packages: read

@@ -25,14 +25,15 @@ A mod to alter the transparency or fully hide armor and equipment with multiplay
 - **Admin controls** for server operators (force armor visible, server-wide combat detection)
 
 #### Compatibility
-Armor Hider is compatible with some major mods focused around visuals. 
+Armor Hider has explicit compatibility with some major mods focused around visuals. 
 
 - [Essential](https://github.com/SparkUniverse/Essential-Mod)
 - [Elytra Trims](https://codeberg.org/KikuGie/elytra-trims)
 - [Wildfire Gender / Female Gender Mod](https://github.com/FemaleGenderMod/FemaleGenderMod)
-- [GeckoLib](https://github.com/bernie-g/geckolib)
+- [GeckoLib](https://github.com/bernie-g/geckolib) (any custom armor mod using GeckoLib as intended should work out of the box)
 - [Fantasy Armor](https://github.com/kend1e/FANTASY-ARMOR)
 - [LuckPerms](https://luckperms.net/)
+- [Iris](https://github.com/IrisShaders/Iris)
 
 *If you're using a mod not yet supported, please open an issue on GitHub to let me know or drop a message on Discord.*
 

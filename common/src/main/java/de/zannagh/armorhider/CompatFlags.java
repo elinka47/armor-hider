@@ -7,10 +7,20 @@ package de.zannagh.armorhider;
  * <p>Flags are set via {@link de.zannagh.armorhider.util.MixinUtil#setCompatFlags}
  * using resource-based probing (never {@code Class.forName}) to avoid premature
  * class loading that breaks other mods' mixins.</p>
+ * 
+ * <p>
+ *     Remarks:
+ * </p>
+ * <remarks>
+ *     <ul>
+ *         <li>Iris should not be loaded via this as it breaks game client startup on NeoForge</li>
+ *     </ul>
+ * </remarks>
  */
 public final class CompatFlags {
 
     public static boolean ET_LOADED = false;
+    public static boolean EMF_LOADED = false;
     public static boolean FA_LOADED = false;
     public static boolean GECKOLIB_LOADED = false;
     public static boolean WFGM_LOADED = false;

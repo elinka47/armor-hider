@@ -1,6 +1,10 @@
-package de.zannagh.armorhider.client.gui.elements;
+package de.zannagh.armorhider.client.gui.elements.factories;
 
+import com.mojang.datafixers.util.Pair;
 import de.zannagh.armorhider.client.gui.UiConstants;
+import de.zannagh.armorhider.client.gui.elements.CompoundButtonWidget;
+import de.zannagh.armorhider.client.gui.elements.CompoundOptionWidget;
+import de.zannagh.armorhider.client.gui.elements.implementations.*;
 import de.zannagh.armorhider.client.gui.screens.ItemExclusionScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
@@ -12,6 +16,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.EquipmentSlot;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -42,6 +47,38 @@ public class OptionElementFactory {
         var textWidget = new MultiLineTextWidget(text, Minecraft.getInstance().font).setCentered(true);
         widgetAdder.accept(textWidget);
     }
+
+    /**
+     * Adds a compound widget consisting of up to 8 buttons (square layer buttons), which get evenly
+     * spaced within our available row width.
+     */
+    @SuppressWarnings("SequencedCollectionMethodCanBeUsed")
+    public AbstractWidget createCompoundButtonWidget(
+            ArrayList<Pair<Boolean, Consumer<Boolean>>> configs
+    ){
+        var first = new CombatDetectionButton(
+                configs.get(0).getFirst(),
+                onPress -> {
+                    if (onPress instanceof CombatDetectionButton btn) {
+                        var newValue = btn.toggle();
+                        configs.get(0).getSecond().accept(newValue);
+                    }
+                }
+        );
+        var second = new VanillaArmorInCombatButton(
+                configs.get(1).getFirst(),
+                onPress -> {
+                    if (onPress instanceof VanillaArmorInCombatButton btn) {
+                        var newValue = btn.toggle();
+                        configs.get(1).getSecond().accept(newValue);
+                    }
+                }
+        );
+        var allButtons = new AbstractWidget[]{first, second};
+        return new CompoundButtonWidget(
+                allButtons,
+                rowWidth, 20);
+    }
     
     public void addSliderWithToggles(EquipmentSlot slot,
                                      OptionInstance<Double> slider,
@@ -53,7 +90,7 @@ public class OptionElementFactory {
         var widget = createSliderWithToggleForSlot(slot, slider, options, initialGlint, initialOtherAffect, glintConsumer, additionalAffectConsumer);
         addElementAsWidget(widget);
     }
-
+    
     public AbstractWidget createSliderWithToggleForSlot(EquipmentSlot slot,
                                                        OptionInstance<Double> slider,
                                                        Options options,
@@ -61,17 +98,19 @@ public class OptionElementFactory {
                                                        @Nullable Boolean initialOtherAffect,
                                                        @Nullable Consumer<Boolean> glintConsumer,
                                                        @Nullable Consumer<Boolean> additionalAffectConsumer) {
-        int sliderWidth = CompoundOptionWidget.getPrimaryWidth(rowWidth);
-        int buttonWidth = CompoundOptionWidget.getAdditionalElementWidth(rowWidth);
-        
-        // Always have a slider + the extended slot button.
+        int smallCount = 1; // secondary always present
+        if (initialGlint != null && glintConsumer != null) smallCount++;
+        if (initialOtherAffect != null && additionalAffectConsumer != null) smallCount++;
+        int sliderWidth = CompoundOptionWidget.getPrimaryWidth(rowWidth, smallCount);
+        int buttonWidth = CompoundOptionWidget.getAdditionalElementWidth(rowWidth, smallCount);
+
         AbstractWidget sliderWidget = slider.createButton(options, 0, 0, sliderWidth);
         ExtendedSlotIconButton button = new ExtendedSlotIconButton(
-                slot, 
+                slot,
                 buttonWidth,
                 UiConstants.DEFAULT_BUTTON_HEIGHT, onPress -> {
                 var mc = Minecraft.getInstance();
-                
+
                 //? if <= 26.1.2
                 var currentScreen = mc.screen;
                 //? if > 26.1.2
@@ -81,7 +120,7 @@ public class OptionElementFactory {
                 }
                 mc.setScreenAndShow(new ItemExclusionScreen(currentScreen, options, slot));
             });
-        
+
         GlintSlotOnOffButton toggleGlintButton = null;
         if (initialGlint != null && glintConsumer != null) {
             toggleGlintButton = new GlintSlotOnOffButton(
@@ -96,14 +135,14 @@ public class OptionElementFactory {
                         }
                     });
         }
-        
+
         AffectOtherItemsButton affectOtherItemsButton = null;
-        
+
         if (initialOtherAffect != null && additionalAffectConsumer != null) {
             affectOtherItemsButton = new AffectOtherItemsButton(initialOtherAffect,
-                    slot, 
+                    slot,
                     buttonWidth,
-                    UiConstants.DEFAULT_BUTTON_HEIGHT, 
+                    UiConstants.DEFAULT_BUTTON_HEIGHT,
                     onPress -> {
                         if (onPress instanceof AffectOtherItemsButton btn) {
                             boolean result = btn.toggle();
@@ -111,6 +150,7 @@ public class OptionElementFactory {
                         }
                     });
         }
+
         return new CompoundOptionWidget(sliderWidget, button, toggleGlintButton, affectOtherItemsButton, rowWidth, 20);
     }
 

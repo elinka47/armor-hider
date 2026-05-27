@@ -39,7 +39,6 @@ repositories {
 with(sc) {
     constants["fabric"] = current.project.contains("fabric")
     constants["neoforge"] = current.project.contains("neoforge")
-    constants["iris"] = hasProperty("iris.version")
 }
 
 // ── Common branch ──
@@ -80,6 +79,12 @@ if (branch == "common") {
         }
         if (hasProperty("iris.version")) {
             add(modClientDep, "maven.modrinth:iris:${findProperty("iris.version")}")
+        }
+        if (hasProperty("emf.version")) {
+            add(modClientDep, "maven.modrinth:entity-model-features:${findProperty("emf.version")}")
+        }
+        if (hasProperty("etf.version")) {
+            add(modClientDep, "maven.modrinth:entitytexturefeatures:${findProperty("etf.version")}")
         }
         add("compileOnly", "net.luckperms:api:5.4")
         add("compileOnly", "org.jspecify:jspecify:1.0.0")

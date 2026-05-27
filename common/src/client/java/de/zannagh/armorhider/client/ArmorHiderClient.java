@@ -29,11 +29,8 @@ public class ArmorHiderClient {
     public static RenderContext RENDER_CONTEXT = new RenderContext();
 
     public static final boolean FA_LOADED = CompatFlags.FA_LOADED || classExists("net.kenddie.fantasyarmor.FantasyArmor");
-    //? if >= 1.21.9
     public static final boolean GECKOLIB_LOADED = CompatFlags.GECKOLIB_LOADED || classExists("com.geckolib.renderer.GeoArmorRenderer");
-    //? if < 1.21.9
-    //public static final boolean GECKOLIB_LOADED = CompatFlags.GECKOLIB_LOADED || classExists("com.geckolib.renderer.GeoArmorRenderer");
-    public static boolean ET_LOADED = CompatFlags.ET_LOADED || classExists("dev.kikugie.elytratrims.ep.ETClientEntrypoint");
+    public static final boolean ET_LOADED = CompatFlags.ET_LOADED || classExists("dev.kikugie.elytratrims.ep.ETClientEntrypoint");
     public static final boolean IRIS_LOADED = classExists("net.irisshaders.iris.api.v0.IrisApi");
 
     private static boolean classExists(String name) {
@@ -53,11 +50,22 @@ public class ArmorHiderClient {
     public static void init() {
         ArmorHider.LOGGER.info("Armor Hider client initializing...");
         ClientCommunicationManager.initClient();
-        //? if iris
-        if (IRIS_LOADED) initIrisCompat();
+        if (IRIS_LOADED) {
+            initIrisCompat();
+        }
+        if (CompatFlags.EMF_LOADED) {
+            initEmfCompat();
+        }
     }
 
-    //? if iris {
+    private static void initEmfCompat() {
+        try {
+            de.zannagh.armorhider.client.compat.emf.EmfCompat.register();
+        } catch (Exception e) {
+            ArmorHider.LOGGER.warn("Failed to register vanilla model condition with EMF", e);
+        }
+    }
+
     private static void initIrisCompat() {
         try {
             de.zannagh.armorhider.client.compat.iris.IrisCompat.registerPipelines();
@@ -65,7 +73,6 @@ public class ArmorHiderClient {
             ArmorHider.LOGGER.warn("Failed to register pipelines with Iris", e);
         }
     }
-    //?}
     
     public static @NonNull Boolean isClientConnectedToServer() {
         return Minecraft.getInstance().isLocalServer()
@@ -129,16 +136,16 @@ public class ArmorHiderClient {
     private static void enableDebugLogging() {
         DebugLogger.enable();
         DebugLogger.log("Started debug logging.");
-        DebugLogger.log("--- Mod configuration ---");
-        DebugLogger.log("The current local configuration is " + ArmorHiderClient.CLIENT_CONFIG_MANAGER.local().toJson());
+
+        StringBuilder config = new StringBuilder();
+        config.append("--- Mod configuration ---\n");
+        config.append("Local: ").append(ArmorHiderClient.CLIENT_CONFIG_MANAGER.local().toJson()).append("\n");
         if (ArmorHiderClient.CLIENT_CONFIG_MANAGER.getServerConfig() != null) {
-            DebugLogger.log("The current server configuration is " + ArmorHiderClient.CLIENT_CONFIG_MANAGER.getServerConfig().toJson());
+            config.append("Server: ").append(ArmorHiderClient.CLIENT_CONFIG_MANAGER.getServerConfig().toJson()).append("\n");
+        } else {
+            config.append("Server: null\n");
         }
-        else {
-            DebugLogger.log("The current server configuration is null");
-        }
-        
-        DebugLogger.log("--- End of mod configuration ---");
+        DebugLogger.writeConfig(config.toString());
     }
 
     private static void disableDebugLogging() {

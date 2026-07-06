@@ -185,6 +185,13 @@ public final class ArmorHiderRenderTypes {
     private static final Function<Identifier, RenderType> TRANSLUCENT_ARMOR = memoize(
             texture -> RenderType.create("armor_hider_armor_translucent_no_depth",
                     RenderSetup.builder(ARMOR_TRANSLUCENT_NO_DEPTH)
+                            // 26.3 OIT: translucent types only fade under the "Improved Transparency"
+                            // option if they carry an OIT set + opaque-parts pipeline. The no-depth clone
+                            // stays the main pipeline (blends on the non-OIT path); these drive the OIT path.
+                            //? if >= 26.3-0.snapshot.2 {
+                            /*.setOitPipelines(RenderPipelines.OIT_ENTITY)
+                            .setOpaquePartsPipeline(RenderPipelines.ENTITY_TRANSLUCENT_OPAQUE_PARTS)
+                            *///?}
                             .withTexture("Sampler0", texture)
                             .useLightmap()
                             .useOverlay()
@@ -198,6 +205,10 @@ public final class ArmorHiderRenderTypes {
     private static final Function<Identifier, RenderType> TRANSLUCENT_ENTITY = memoize(
             texture -> RenderType.create("armor_hider_entity_translucent_no_depth",
                     RenderSetup.builder(ENTITY_TRANSLUCENT_NO_DEPTH)
+                            //? if >= 26.3-0.snapshot.2 {
+                            /*.setOitPipelines(RenderPipelines.OIT_ENTITY)
+                            .setOpaquePartsPipeline(RenderPipelines.ENTITY_TRANSLUCENT_OPAQUE_PARTS)
+                            *///?}
                             .withTexture("Sampler0", texture)
                             .useLightmap()
                             .useOverlay()
@@ -280,6 +291,10 @@ public final class ArmorHiderRenderTypes {
     private static final RenderType TRANSLUCENT_ITEM_SHEET = RenderType.create(
             "armor_hider_item_translucent_cull_no_depth",
             RenderSetup.builder(ITEM_ENTITY_TRANSLUCENT_CULL_NO_DEPTH)
+                    //? if >= 26.3-0.snapshot.2 {
+                    /*.setOitPipelines(RenderPipelines.OIT_ITEM)
+                    .setOpaquePartsPipeline(RenderPipelines.ITEM_TRANSLUCENT_OPAQUE_PARTS)
+                    *///?}
                     .withTexture("Sampler0", net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_BLOCKS)
                     // 26.3 removed RenderSetupBuilder.setOutputTarget (and OutputTarget.ITEM_ENTITY_TARGET);
                     // item entities now draw to the default target, so the call is simply dropped.
